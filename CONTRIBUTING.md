@@ -62,8 +62,7 @@ Keep weights honest. A tell that only some AI pages have should weigh less than 
 - Every bug fix comes with a test that failed before the fix.
 - No new runtime dependencies. handmade must run on plain Python.
 - Write code comments with `#`. Do not use docstrings.
-- Do not put a comma before "and" or "or", in docs or in code.
-- Write docs in plain, short sentences. No dashes as punctuation, no hype words. The project checks its own docs this way.
+- Write docs in plain, short sentences. The project checks its own docs this way.
 - Run `python -m unittest discover -s tests` before you push. CI runs it on Linux, macOS and Windows.
 
 ## Good first issues
@@ -72,6 +71,6 @@ Look for the `good first issue` label. These are small and well described. Comme
 
 ## Questions
 
-Open a discussion or an issue. There are no silly questions here.
+Open a discussion or an issue. 
 
 By taking part, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).

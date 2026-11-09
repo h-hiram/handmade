@@ -2,7 +2,7 @@
 
 ## Our promise
 
-We want handmade to be a friendly place to learn and build. Everyone is welcome, whatever their experience, background, identity or level of English.
+We want handmade to be a friendly place to learn and build. Everyone is welcome, whatever their experience, background, identity or level of communication.
 
 ## What we expect
 
