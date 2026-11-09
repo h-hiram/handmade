@@ -1,0 +1,20 @@
+name: Missed AI look
+description: A page still looks AI-generated, but handmade scored it well
+labels: ["missed tell"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What gives it away?
+      description: Name the pattern you see. A screenshot helps a lot.
+    validations:
+      required: true
+  - type: textarea
+    id: snippet
+    attributes:
+      label: Code that produces it
+      render: html
+  - type: input
+    id: score
+    attributes:
+      label: Score handmade gave

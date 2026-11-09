@@ -1,0 +1,82 @@
+{
+  "handmade_system": 1,
+  "mood": "warm",
+  "theme": "light",
+  "fonts": {
+    "display": "Alegreya",
+    "body": "Alegreya Sans",
+    "mono": "Red Hat Mono"
+  },
+  "colors": {
+    "paper": "#f8f6f8",
+    "surface": "#f0ebee",
+    "line": "#dbd1d7",
+    "ink": "#24141e",
+    "muted": "#7e6374",
+    "accent": "#a43c7d",
+    "on-accent": "#ffffff",
+    "accent-2": "#449361",
+    "danger": "#bf2c22",
+    "success": "#227745",
+    "warning": "#915a08",
+    "raised": "#fefefe",
+    "accent-soft": "#f7e9f1",
+    "accent-strong": "#863166",
+    "success-soft": "#ebf9f1",
+    "warning-soft": "#fbf4e9",
+    "danger-soft": "#fbeae9",
+    "neutral-50": "#f8f6f8",
+    "neutral-100": "#f1eef1",
+    "neutral-200": "#e4dde4",
+    "neutral-300": "#cfc4cf",
+    "neutral-400": "#afa1af",
+    "neutral-500": "#8c7d8c",
+    "neutral-600": "#6d5f6d",
+    "neutral-700": "#504450",
+    "neutral-800": "#352c35",
+    "neutral-900": "#1f191f",
+    "chart-1": "#a43c7d",
+    "chart-2": "#5b9d39",
+    "chart-3": "#3f60ac",
+    "chart-4": "#ac5a3f",
+    "chart-5": "#e232a7"
+  },
+  "type_scale_px": [
+    13,
+    16,
+    20,
+    24,
+    32,
+    40,
+    48
+  ],
+  "spacing_px": [
+    8,
+    16,
+    24,
+    32,
+    48,
+    64,
+    96,
+    128
+  ],
+  "radius_px": {
+    "controls": 8,
+    "containers": 12
+  },
+  "shadows": {
+    "raised": "0 1px 2px rgba(36, 20, 30, 0.06), 0 2px 8px -2px rgba(36, 20, 30, 0.06)",
+    "overlay": "0 16px 40px -12px rgba(36, 20, 30, 0.22), 0 4px 12px -4px rgba(36, 20, 30, 0.08)"
+  },
+  "depth": "shadows",
+  "brief": {
+    "answers": {
+      "product": "Duka Ledger, an app that tracks stock and daily sales for small shops in Kenya",
+      "audience": "dukawallahs and kiosk owners on Android phones, often on slow data",
+      "reference": "a handwritten shop ledger book",
+      "signature": "today's sales total, in shillings",
+      "mood": "warm"
+    },
+    "vague": {}
+  }
+}

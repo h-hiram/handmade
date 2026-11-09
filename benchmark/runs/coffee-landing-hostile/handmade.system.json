@@ -1,0 +1,46 @@
+{
+  "handmade_system": 1,
+  "mood": "warm",
+  "theme": "light",
+  "fonts": {
+    "display": "Gelasio",
+    "body": "Rubik",
+    "mono": "Red Hat Mono"
+  },
+  "colors": {
+    "paper": "#f7f8f7",
+    "surface": "#ebf0eb",
+    "line": "#d1dbd2",
+    "ink": "#142415",
+    "muted": "#5a725a",
+    "accent": "#1f7a21",
+    "on-accent": "#ffffff",
+    "accent-2": "#ad3e88",
+    "danger": "#bf2c22",
+    "success": "#38756b",
+    "warning": "#915a08"
+  },
+  "type_scale_px": [
+    13,
+    16,
+    20,
+    24,
+    32,
+    40,
+    48
+  ],
+  "spacing_px": [
+    8,
+    16,
+    24,
+    32,
+    48,
+    64,
+    96,
+    128
+  ],
+  "radius_px": {
+    "controls": 8,
+    "containers": 12
+  }
+}

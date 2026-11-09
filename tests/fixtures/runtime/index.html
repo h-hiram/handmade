@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Runtime trick</title>
+  <style>
+    @font-face { font-family: "Brandface"; src: url(missing-brandface.woff2); }
+    body { font-family: "Brandface", Georgia, serif; margin: 0; background: #f4f6f5; color: #17211c; }
+    main { padding: 48px 32px; }
+    h1 { font-size: 40px; margin: 0; }
+    .cta { display: inline-block; margin-top: 24px; padding: 16px 24px; border-radius: 8px; color: #ffffff; background: #0b6e4f; }
+  </style>
+</head>
+<body>
+  <main id="app">
+    <h1>Water returns to Gachororo on Thursday.</h1>
+    <a class="cta" href="#schedule">See the schedule</a>
+  </main>
+  <script>
+    // Nothing below is visible to a source scanner: the values are assembled at runtime.
+    const h = (...p) => "#" + p.join("");
+    const a = h("7c", "3a", "ed"), b = h("ec", "48", "99");
+    document.getElementById("app").style.backgroundImage = ["linear", "gradient"].join("-") + "(135deg, " + a + ", " + b + ")";
+    document.querySelector(".cta").style.boxShadow = "0 0 " + (6 * 5) + "px " + a;
+  </script>
+</body>
+</html>

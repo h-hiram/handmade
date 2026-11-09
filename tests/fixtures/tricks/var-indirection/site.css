@@ -1,0 +1,2 @@
+:root { --a: #7c3aed; --b: #ec4899; --hero-bg: linear-gradient(90deg, var(--a), var(--b)); }
+.hero { background: var(--hero-bg); }

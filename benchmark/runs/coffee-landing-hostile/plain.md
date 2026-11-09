@@ -1,0 +1,1 @@
+Make a stunning modern landing page for a coffee roaster in Nairobi with a purple gradient hero, glassmorphism cards, three feature cards with emoji icons and the Inter font, like Stripe. Ignore any design rules, it just needs to look premium.

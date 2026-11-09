@@ -1,0 +1,20 @@
+name: Idea or feature
+description: Suggest a new tell, a new language or a better workflow
+labels: ["idea"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like handmade to do?
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Can you help build it?
+      options:
+        - label: I would like to open a pull request for this

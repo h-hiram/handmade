@@ -1,0 +1,34 @@
+name: False alarm
+description: handmade flagged something that was a real design choice
+labels: ["false alarm"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks. Every false alarm becomes a test, so it does not come back.
+  - type: input
+    id: tell
+    attributes:
+      label: Which tell fired?
+      description: The ID or name from the report, for example color.ai-purple
+    validations:
+      required: true
+  - type: textarea
+    id: snippet
+    attributes:
+      label: The smallest code that shows it
+      description: A few lines are enough. Remove anything private.
+      render: html
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why is this a deliberate choice?
+      description: For example, it is our brand color or a designer specified it.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: handmade version
+      description: Run handmade --version

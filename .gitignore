@@ -1,0 +1,16 @@
+__pycache__/
+*.egg-info/
+.venv/
+build/
+dist/
+*.pyc
+.pytest_cache/
+.DS_Store
+# prompts made by `python benchmark/bench.py prompts`; the three pilot folders are kept
+benchmark/runs/*
+!benchmark/runs/clinic-dashboard/
+!benchmark/runs/sacco-signup/
+!benchmark/runs/coffee-landing-hostile/
+
+# your private notes, kept next to the repo but never pushed
+owner-notes/

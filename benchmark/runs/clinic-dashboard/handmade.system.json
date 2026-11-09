@@ -1,0 +1,84 @@
+{
+  "handmade_system": 1,
+  "mood": "utilitarian",
+  "theme": "light",
+  "fonts": {
+    "display": "Archivo",
+    "body": "Archivo",
+    "mono": "JetBrains Mono"
+  },
+  "colors": {
+    "paper": "#f6f9f7",
+    "surface": "#ebf0eb",
+    "line": "#d1dbd3",
+    "ink": "#142417",
+    "muted": "#5a725e",
+    "accent": "#187728",
+    "on-accent": "#ffffff",
+    "accent-2": "#b3378a",
+    "danger": "#bf2c22",
+    "success": "#38756b",
+    "warning": "#915a08",
+    "raised": "#fdfefe",
+    "accent-soft": "#e7f9ea",
+    "accent-strong": "#11551d",
+    "neutral-50": "#f6f8f7",
+    "neutral-100": "#eef1ef",
+    "neutral-200": "#dde4df",
+    "neutral-300": "#c4cfc8",
+    "neutral-400": "#a1afa6",
+    "neutral-500": "#7d8c82",
+    "neutral-600": "#5f6d64",
+    "neutral-700": "#445048",
+    "neutral-800": "#2c352f",
+    "neutral-900": "#191f1b",
+    "chart-1": "#187728",
+    "chart-2": "#c3278f",
+    "chart-3": "#aa8822",
+    "chart-4": "#219ca1",
+    "chart-5": "#8d356f",
+    "success-soft": "#eef7f5",
+    "warning-soft": "#fbf4e9",
+    "danger-soft": "#fbeae9"
+  },
+  "type_scale_px": [
+    12,
+    14,
+    16,
+    20,
+    24,
+    30,
+    34
+  ],
+  "spacing_px": [
+    4,
+    8,
+    12,
+    16,
+    24,
+    32,
+    48,
+    64
+  ],
+  "radius_px": {
+    "controls": 4,
+    "containers": 6
+  },
+  "shadows": {
+    "raised": "0 1px 2px rgba(20, 36, 23, 0.06), 0 2px 8px -2px rgba(20, 36, 23, 0.06)",
+    "overlay": "0 16px 40px -12px rgba(20, 36, 23, 0.22), 0 4px 12px -4px rgba(20, 36, 23, 0.08)"
+  },
+  "depth": "borders",
+  "brief": {
+    "answers": {
+      "product": "Clinic operations dashboard for Nairobi health centres",
+      "audience": "clinic managers on shared office desktops",
+      "mood": "utilitarian",
+      "goal": "which drugs to reorder today and where to move staff",
+      "users_tasks": "see who is waiting and for how long",
+      "data": "visits today, waiting time, drugs below reorder level, staff on duty",
+      "constraints": "shared desktops: no full patient names on the overview, initials and visit numbers only"
+    },
+    "vague": {}
+  }
+}

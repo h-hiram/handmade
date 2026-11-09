@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "handmade"
+version = "0.3.0"
+description = "Make AI build interfaces that look designed: screen the request, generate a design system and gate the result."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Hiram Mwangi", email = "h.hiramkarogo@gmail.com" }]
+dependencies = []
+keywords = ["ai", "design", "lint", "tailwind", "ui", "prompt", "frontend", "ai-slop", "mcp", "blade", "angular"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Environment :: Console",
+  "Topic :: Software Development :: Quality Assurance",
+  "Topic :: Software Development :: User Interfaces",
+]
+
+[project.optional-dependencies]
+render = ["playwright>=1.40"]
+
+[project.scripts]
+handmade = "handmade.cli:main"
+handmade-mcp = "handmade.mcp:main"
+
+[project.urls]
+Homepage = "https://github.com/h-hiram/handmade"
+Issues = "https://github.com/h-hiram/handmade/issues"
+Changelog = "https://github.com/h-hiram/handmade/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+where = ["src"]

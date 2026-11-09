@@ -1,0 +1,57 @@
+name: release
+
+# Push a tag like v0.1.0 to publish:
+# - the package to PyPI (pip install handmade, pipx, uvx)
+# - handmade.pyz, a single file that runs with plain Python, to the GitHub release
+#
+# One-time setup on PyPI: add this repository as a "trusted publisher" for the project
+# (workflow: release.yml, environment: pypi). No API token is needed.
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m unittest discover -s tests
+      - run: pip install build && python -m build
+      - run: python -m zipapp src -m "handmade.cli:main" -p "/usr/bin/env python3" -o dist/handmade.pyz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - run: rm dist/handmade.pyz
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

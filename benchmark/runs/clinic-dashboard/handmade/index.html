@@ -1,0 +1,635 @@
+<!doctype html>
+<!-- Pilot, handmade condition: built by following runs/clinic-dashboard/handmade.md (v0.3 brief with the craft standard). -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Overview · Central Health Centre</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #f6f9f7;
+      --surface: #ebf0eb;
+      --line: #d1dbd3;
+      --ink: #142417;
+      --muted: #5a725e;
+      --accent: #187728;
+      --on-accent: #ffffff;
+      --accent-2: #b3378a;
+      --danger: #bf2c22;
+      --success: #38756b;
+      --warning: #915a08;
+      --raised: #fdfefe;
+      --accent-soft: #e7f9ea;
+      --accent-strong: #11551d;
+      --neutral-50: #f6f8f7;
+      --neutral-100: #eef1ef;
+      --neutral-200: #dde4df;
+      --neutral-300: #c4cfc8;
+      --neutral-400: #a1afa6;
+      --neutral-500: #7d8c82;
+      --neutral-600: #5f6d64;
+      --neutral-700: #445048;
+      --neutral-800: #2c352f;
+      --neutral-900: #191f1b;
+      --chart-1: #187728;
+      --chart-2: #c3278f;
+      --chart-3: #aa8822;
+      --chart-4: #219ca1;
+      --chart-5: #8d356f;
+      --success-soft: #eef7f5;
+      --warning-soft: #fbf4e9;
+      --danger-soft: #fbeae9;
+      --shadow-raised: 0 1px 2px rgba(20, 36, 23, 0.06), 0 2px 8px -2px rgba(20, 36, 23, 0.06);
+      --shadow-overlay: 0 16px 40px -12px rgba(20, 36, 23, 0.22), 0 4px 12px -4px rgba(20, 36, 23, 0.08);
+      --r-control: 4px;
+      --r-container: 6px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Archivo", sans-serif; font-size: 14px; line-height: 1.5; color: var(--ink); background: var(--paper);
+           -webkit-font-smoothing: antialiased; }
+    button, input { font: inherit; color: inherit; }
+    small { font-size: 12px; color: var(--muted); font-weight: 400; }
+    .mono { font-family: "JetBrains Mono", monospace; font-variant-numeric: tabular-nums; font-feature-settings: "zero" 0; }
+    .icon { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+    .icon-nav { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+    /* ---------- frame ---------- */
+    .app { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; }
+    .side { background: var(--surface); border-right: 1px solid var(--line); }
+    .side-in { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; padding: 16px 12px; }
+    .facility { display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: var(--r-container);
+                background: var(--raised); text-align: left; cursor: pointer; transition: border-color 160ms ease-out; }
+    .facility:hover { border-color: var(--neutral-400); }
+    .mark { width: 32px; height: 32px; border-radius: var(--r-control); background: var(--accent); color: var(--on-accent); display: grid; place-items: center;
+            font-weight: 700; font-size: 12px; letter-spacing: 0.04em; flex: none; }
+    .facility strong { display: block; font-weight: 600; line-height: 1.25; }
+    .facility small { display: block; line-height: 1.25; }
+    .facility .icon { margin-left: auto; color: var(--muted); }
+    .nav-label { margin: 24px 8px 8px; font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+    .nav a { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: var(--r-control); color: var(--neutral-800); text-decoration: none;
+             font-weight: 500; transition: background-color 160ms ease-out, color 160ms ease-out; }
+    .nav a:hover { background: var(--neutral-200); color: var(--ink); }
+    .nav a[aria-current="page"] { background: var(--accent-soft); color: var(--accent-strong); font-weight: 600; }
+    .nav a .count { margin-left: auto; font-size: 12px; padding: 0 8px; border-radius: 999px; background: var(--raised); border: 1px solid var(--line); color: var(--neutral-700); }
+    .nav a .count.alert { background: var(--danger-soft); border-color: var(--danger-soft); color: var(--danger); }
+    .side-foot { margin-top: auto; border-top: 1px solid var(--line); padding-top: 12px; }
+    .me { display: flex; align-items: center; gap: 12px; padding: 8px; }
+    .me strong { display: block; font-weight: 600; line-height: 1.25; }
+    .me small { display: block; line-height: 1.25; }
+    .lock { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 4px; padding: 8px; border: 1px solid var(--line); border-radius: var(--r-control);
+            background: var(--raised); cursor: pointer; font-weight: 500; transition: border-color 160ms ease-out; }
+    .lock:hover { border-color: var(--neutral-400); }
+    .lock small { margin-left: auto; white-space: nowrap; }
+
+    .top { display: flex; align-items: center; gap: 16px; height: 64px; padding: 0 32px; border-bottom: 1px solid var(--line); background: var(--raised); position: sticky; top: 0; z-index: 2; }
+    .crumbs { color: var(--muted); }
+    .crumbs b { color: var(--ink); font-weight: 600; }
+    .search { margin-left: auto; display: flex; align-items: center; gap: 8px; width: 320px; height: 36px; padding: 0 12px; border: 1px solid var(--line);
+              border-radius: var(--r-control); background: var(--paper); color: var(--muted); transition: border-color 160ms ease-out; }
+    .search:focus-within { border-color: var(--accent); }
+    .search input { border: 0; background: transparent; outline: 0; width: 100%; color: var(--ink); }
+    .search input::placeholder { color: var(--muted); }
+    kbd { white-space: nowrap; font-family: "JetBrains Mono", monospace; font-size: 12px; padding: 0 4px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: var(--r-control); color: var(--muted); background: var(--raised); }
+    .sample { white-space: nowrap; font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: var(--r-control); background: var(--warning-soft); color: var(--warning); }
+
+    main { padding: 24px 32px 48px; }
+    .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+    h1 { font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -0.01em; }
+    .updated { margin-top: 4px; color: var(--muted); }
+    .live { display: inline-block; margin-right: 8px; vertical-align: middle; width: 8px; height: 8px; border-radius: 999px; background: var(--success); box-shadow: 0 0 0 4px var(--success-soft); }
+
+    .toolbar { display: flex; align-items: center; gap: 12px; margin-top: 24px; }
+    .segmented { display: inline-flex; padding: 4px; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-container); }
+    .segmented button { border: 0; background: transparent; padding: 4px 12px; border-radius: var(--r-control); cursor: pointer; color: var(--neutral-700); font-weight: 500;
+                        transition: background-color 160ms ease-out, color 160ms ease-out; }
+    .segmented button:hover { color: var(--ink); }
+    .segmented button[aria-pressed="true"] { background: var(--raised); color: var(--ink); font-weight: 600; box-shadow: var(--shadow-raised); }
+    .dropdown { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--r-control);
+                background: var(--raised); cursor: pointer; font-weight: 500; transition: border-color 160ms ease-out; }
+    .dropdown:hover { border-color: var(--neutral-400); }
+    .dropdown .icon { color: var(--muted); }
+    .dropdown span { color: var(--muted); font-weight: 400; }
+    .primary { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 16px; border: 1px solid var(--accent-strong);
+               border-radius: var(--r-control); background: var(--accent); color: var(--on-accent); font-weight: 600; cursor: pointer;
+               transition: background-color 160ms ease-out; }
+    .primary:hover { background: var(--accent-strong); }
+    .primary .badge { font-size: 12px; padding: 0 8px; border-radius: 999px; background: var(--raised); color: var(--accent-strong); }
+
+    /* ---------- figures ---------- */
+    .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 24px; border: 1px solid var(--line); border-radius: var(--r-container); background: var(--raised); }
+    .kpi { padding: 16px 24px; display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto auto; column-gap: 12px; }
+    .kpi + .kpi { border-left: 1px solid var(--line); }
+    .kpi .label { grid-column: 1 / -1; color: var(--muted); font-weight: 500; }
+    .kpi .value { font-size: 30px; font-weight: 600; line-height: 1.2; letter-spacing: -0.02em; margin-top: 4px; }
+    .kpi .value small { font-size: 16px; letter-spacing: 0; }
+    .kpi .spark { align-self: end; width: 96px; height: 32px; }
+    .spark polyline { fill: none; stroke: var(--chart-1); stroke-width: 1.75; stroke-linejoin: round; stroke-linecap: round; }
+    .spark circle { fill: var(--chart-1); }
+    .spark.bad polyline { stroke: var(--danger); }
+    .spark.bad circle { fill: var(--danger); }
+    .delta { grid-column: 1 / -1; margin-top: 8px; color: var(--muted); }
+    .delta b { display: inline-flex; align-items: center; gap: 2px; margin-right: 4px; font-weight: 600; white-space: nowrap; }
+    .delta .good { color: var(--success); }
+    .delta .bad { color: var(--danger); }
+    .meter { align-self: end; display: flex; gap: 4px; width: 96px; height: 8px; margin-bottom: 8px; }
+    .meter i { display: block; height: 100%; border-radius: var(--r-control); background: var(--neutral-200); }
+    .meter i.on { background: var(--chart-1); }
+    .meter i.warn { background: var(--warning); }
+    .meter i.bad { background: var(--danger); }
+
+    /* ---------- panels ---------- */
+    .row { display: grid; gap: 24px; margin-top: 24px; }
+    .row.a { grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); }
+    .row.b { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); }
+    .panel { display: flex; flex-direction: column; background: var(--raised); border: 1px solid var(--line); border-radius: var(--r-container); min-width: 0; }
+    .panel-head { display: flex; align-items: center; gap: 12px; padding: 16px 24px; border-bottom: 1px solid var(--line); }
+    .panel-head h2 { font-size: 16px; font-weight: 600; }
+    .panel-head p { color: var(--muted); }
+    .panel-head .link { margin-left: auto; color: var(--accent); font-weight: 500; text-decoration: none; }
+    .panel-head .link:hover { color: var(--accent-strong); text-decoration: underline; text-underline-offset: 4px; }
+    .legend { margin-left: auto; display: flex; gap: 16px; color: var(--muted); }
+    .legend span { display: inline-flex; align-items: center; gap: 8px; }
+    .legend i { display: block; width: 12px; height: 12px; border-radius: var(--r-control); }
+    .legend .now { background: var(--chart-1); }
+    .legend .prev { background: var(--neutral-300); }
+    .chart-wrap { padding: 16px 24px 8px; flex: 1; display: flex; align-items: center; }
+    .chart { width: 100%; height: auto; display: block; }
+    .chart .grid { stroke: var(--line); stroke-width: 1; }
+    .chart .tick { fill: var(--muted); font-family: "JetBrains Mono", monospace; font-size: 12px; }
+    .chart .bar-prev { fill: var(--neutral-300); }
+    .chart .bar-now { fill: var(--chart-1); transition: fill 160ms ease-out; }
+    .chart .bar-now:hover { fill: var(--accent-strong); }
+    .chart .bar-now.partial { fill: var(--accent-soft); stroke: var(--chart-1); stroke-width: 1.5; stroke-dasharray: 4 3; }
+    .chart .now { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 2 3; }
+    .chart .now-label { fill: var(--ink); font-family: "JetBrains Mono", monospace; font-size: 12px; font-weight: 600; }
+    .mix { padding: 16px 24px; border-top: 1px solid var(--line); }
+    .mix-head { display: flex; justify-content: space-between; color: var(--muted); }
+    .mix-head b { color: var(--ink); font-weight: 600; }
+    .mix-bar { display: flex; gap: 4px; height: 12px; margin-top: 12px; }
+    .mix-bar i { display: block; border-radius: var(--r-control); }
+    .s1 { background: var(--chart-1); } .s2 { background: var(--chart-2); } .s3 { background: var(--chart-3); } .s4 { background: var(--chart-4); }
+    .mix-keys { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 12px; color: var(--muted); }
+    .mix-keys li { display: inline-flex; align-items: center; gap: 8px; }
+    .mix-keys i { display: block; width: 8px; height: 8px; border-radius: 999px; }
+    .mix-keys b { color: var(--ink); font-weight: 600; }
+
+    .alerts { list-style: none; }
+    .alerts li { display: grid; grid-template-columns: auto 1fr; gap: 12px; padding: 16px 24px; border-bottom: 1px solid var(--line); }
+    .alerts li:last-child { border-bottom: 0; }
+    .alerts .dot { width: 32px; height: 32px; border-radius: var(--r-control); display: grid; place-items: center; }
+    .alerts .dot.danger { background: var(--danger-soft); color: var(--danger); }
+    .alerts .dot.warning { background: var(--warning-soft); color: var(--warning); }
+    .alerts .dot.info { background: var(--accent-soft); color: var(--accent-strong); }
+    .alerts strong { display: block; font-weight: 600; line-height: 1.4; }
+    .alerts p { color: var(--muted); }
+    .alerts .acts { display: flex; gap: 8px; margin-top: 8px; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--r-control); background: var(--raised);
+           font-weight: 500; cursor: pointer; transition: border-color 160ms ease-out, background-color 160ms ease-out; }
+    .btn:hover { border-color: var(--neutral-400); background: var(--neutral-50); }
+    .btn.go { border-color: var(--accent); color: var(--accent-strong); background: var(--accent-soft); }
+    .btn.go:hover { background: var(--raised); }
+    time { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--muted); }
+
+    /* ---------- tables ---------- */
+    .scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { position: sticky; top: 0; text-align: left; font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase;
+         padding: 8px 12px; background: var(--surface); border-bottom: 1px solid var(--line); white-space: nowrap; }
+    th:first-child, td:first-child { padding-left: 24px; }
+    th:last-child, td:last-child { padding-right: 24px; }
+    th button { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
+    th button:hover { color: var(--ink); }
+    th.num, td.num { text-align: right; }
+    td { padding: 8px 12px; height: 48px; border-bottom: 1px solid var(--line); vertical-align: middle; white-space: nowrap; }
+    tbody tr { transition: background-color 120ms ease-out; }
+    tbody tr:hover { background: var(--neutral-50); }
+    tbody tr.selected { background: var(--accent-soft); }
+    tbody tr:last-child td { border-bottom: 0; }
+    .patient { display: inline-flex; align-items: center; gap: 12px; font-weight: 600; }
+    .patient small, .item small { display: block; line-height: 1.2; }
+    .patient > span:last-child { line-height: 1.25; }
+    .initials, .avatar { width: 28px; height: 28px; border-radius: 999px; display: inline-grid; place-items: center; font-size: 12px; font-weight: 600;
+                        background: var(--neutral-200); color: var(--neutral-800); flex: none; }
+    .item { font-weight: 500; line-height: 1.25; }
+    .wait { display: inline-flex; align-items: center; gap: 8px; }
+    .wait .mono { width: 24px; text-align: right; font-weight: 600; }
+    .wait-track { width: 48px; height: 4px; border-radius: 999px; background: var(--neutral-200); overflow: hidden; }
+    .wait-fill, .level-fill { display: block; height: 100%; border-radius: 999px; }
+    .ok { background: var(--chart-1); }
+    .wait-fill.warning, .level-fill.warning { background: var(--warning); }
+    .wait-fill.danger, .level-fill.danger { background: var(--danger); }
+    .level { display: block; width: 64px; height: 4px; margin: 4px 0 0 auto; border-radius: 999px; background: var(--neutral-200); overflow: hidden; }
+    .pill { display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: var(--r-control); font-size: 12px; font-weight: 600;
+            background: var(--neutral-100); color: var(--neutral-700); }
+    .pill-danger { background: var(--danger-soft); color: var(--danger); }
+    .pill-warning { background: var(--warning-soft); color: var(--warning); }
+    .pill-success { background: var(--success-soft); color: var(--success); }
+    .unassigned { color: var(--danger); font-weight: 600; }
+    .icon-btn { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid transparent; border-radius: var(--r-control); background: none;
+                color: var(--muted); cursor: pointer; transition: border-color 160ms ease-out, color 160ms ease-out; }
+    .icon-btn:hover { border-color: var(--line); color: var(--ink); background: var(--raised); }
+    .row-action { width: 48px; }
+    td.wrap { white-space: normal; }
+    .table-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; border-top: 1px solid var(--line); color: var(--muted); background: var(--neutral-50); border-radius: 0 0 var(--r-container) var(--r-container); }
+    .pager { display: flex; gap: 8px; }
+
+    .check-cell { width: 48px; }
+    .check { position: relative; display: inline-grid; place-items: center; width: 20px; height: 20px; cursor: pointer; }
+    .check input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .check span { width: 20px; height: 20px; display: grid; place-items: center; border: 1.5px solid var(--neutral-400); border-radius: var(--r-control); background: var(--raised);
+                  color: transparent; transition: background-color 120ms ease-out, border-color 120ms ease-out; }
+    .check span .icon { width: 12px; height: 12px; stroke-width: 3; }
+    .check input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+    .check input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .depts { list-style: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .dept { padding: 16px 24px; }
+    .dept + .dept { border-left: 1px solid var(--line); }
+    .dept-head { display: flex; justify-content: space-between; align-items: baseline; }
+    .dept-head strong { font-weight: 600; }
+    .dept-head .mono { font-size: 16px; font-weight: 600; }
+    .dept-head .short { color: var(--danger); }
+    .avatars { display: flex; gap: 4px; margin-top: 12px; }
+    .dept-note { margin-top: 12px; font-size: 12px; color: var(--muted); }
+    .dept-note.danger { color: var(--danger); font-weight: 600; }
+    .dept-note.warning { color: var(--warning); font-weight: 600; }
+    .dept-note.success { color: var(--success); font-weight: 600; }
+    .suggest { display: flex; align-items: center; gap: 12px; margin: 0 24px 16px; padding: 12px 16px; border-radius: var(--r-container); background: var(--accent-soft); color: var(--ink); }
+    .suggest .icon { color: var(--accent-strong); }
+    .suggest .btn { margin-left: auto; }
+
+    footer { margin-top: 24px; color: var(--muted); font-size: 12px; display: flex; gap: 16px; }
+
+    @media (max-width: 1100px) {
+      .row.a, .row.b { grid-template-columns: minmax(0, 1fr); }
+      .depts { grid-template-columns: 2fr 1fr 1fr; }
+      .dept:nth-child(4) { border-left: 0; }
+      .dept:nth-child(n+4) { border-top: 1px solid var(--line); }
+    }
+    @media (max-width: 860px) {
+      .app { grid-template-columns: minmax(0, 1fr); }
+      .side { border-right: 0; border-bottom: 1px solid var(--line); }
+      .side-in { position: static; height: auto; flex-direction: row; align-items: center; gap: 12px; padding: 8px 16px; overflow-x: auto; }
+      .side .facility { width: auto; flex: none; } .side .facility strong { white-space: nowrap; }
+      .side .facility small, .nav-label, .side-foot, .nav a .count { display: none; }
+      .nav { display: flex; gap: 4px; }
+      .nav a { white-space: nowrap; }
+      .side-in > .nav:last-of-type { display: none; }
+      .top { padding: 0 16px; height: 56px; }
+      .crumbs, kbd { display: none; }
+      .search { width: 100%; margin-left: 0; }
+      main { padding: 16px 16px 48px; }
+      .head { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .toolbar { flex-wrap: wrap; }
+      .primary { margin-left: 0; width: 100%; justify-content: center; height: 44px; }
+      .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .kpi { padding: 16px; }
+      .kpi:nth-child(3) { border-left: 0; }
+      .kpi:nth-child(n+3) { border-top: 1px solid var(--line); }
+      .kpi .spark, .meter { display: none; }
+      .kpi .value { font-size: 24px; }
+      .panel-head { padding: 12px 16px; flex-wrap: wrap; }
+      .legend { margin-left: 0; width: 100%; }
+      .chart-wrap { padding: 12px 8px 4px; }
+      .mix { padding: 12px 16px; } .mix-head { flex-direction: column; }
+      .alerts li { padding: 12px 16px; }
+      .depts { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+      .dept { padding: 12px 16px; }
+      .dept:nth-child(odd) { border-left: 0; }
+      .dept:nth-child(4) { border-left: 1px solid var(--line); }
+      .dept:nth-child(n+3) { border-top: 1px solid var(--line); }
+      .suggest { margin: 0 16px 16px; flex-wrap: wrap; }
+      .suggest .btn { margin-left: 0; }
+      th { top: 0; }
+      th:first-child, td:first-child { padding-left: 16px; }
+      .table-foot { padding: 12px 16px; }
+      footer { flex-direction: column; gap: 4px; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  </style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-overview" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></symbol><symbol id="i-queue" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol><symbol id="i-pharmacy" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></symbol><symbol id="i-roster" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="4"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol><symbol id="i-referral" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol><symbol id="i-report" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></symbol><symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol><symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol><symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></symbol><symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></symbol><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol><symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="4"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol><symbol id="i-up" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></symbol><symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 5h18M6 12h12M10 19h4"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></symbol><symbol id="i-move" viewBox="0 0 24 24"><path d="M7 7h11l-3-3M17 17H6l3 3"/></symbol><symbol id="i-sort" viewBox="0 0 24 24"><path d="m8 9 4-4 4 4M8 15l4 4 4-4"/></symbol></svg>
+<div class="app">
+  <aside class="side" aria-label="Main"><div class="side-in">
+    <button class="facility" aria-label="Switch facility. Current: Central Health Centre">
+      <span class="mark" aria-hidden="true">CHC</span>
+      <span><strong>Central Health Centre</strong><small>Nairobi · Level 3</small></span>
+      <svg class="icon" aria-hidden="true"><use href="#i-sort"/></svg>
+    </button>
+    <p class="nav-label">Today</p>
+    <nav class="nav">
+      <a href="#" aria-current="page"><svg class="icon-nav" aria-hidden="true"><use href="#i-overview"/></svg>Overview</a>
+      <a href="#queue"><svg class="icon-nav" aria-hidden="true"><use href="#i-queue"/></svg>Patient queue<span class="count alert">23</span></a>
+      <a href="#stock"><svg class="icon-nav" aria-hidden="true"><use href="#i-pharmacy"/></svg>Pharmacy stock<span class="count alert">5</span></a>
+      <a href="#staff"><svg class="icon-nav" aria-hidden="true"><use href="#i-roster"/></svg>Staff roster<span class="count">14</span></a>
+      <a href="#"><svg class="icon-nav" aria-hidden="true"><use href="#i-referral"/></svg>Referrals<span class="count">2</span></a>
+    </nav>
+    <p class="nav-label">Reports</p>
+    <nav class="nav" aria-label="Reports">
+      <a href="#"><svg class="icon-nav" aria-hidden="true"><use href="#i-report"/></svg>Daily summary (MOH 705)</a>
+      <a href="#"><svg class="icon-nav" aria-hidden="true"><use href="#i-report"/></svg>Stock-out history</a>
+    </nav>
+    <div class="side-foot">
+      <div class="me"><span class="avatar" aria-hidden="true">GN</span><span><strong>Grace Njeri</strong><small>Facility in-charge</small></span></div>
+      <button class="lock"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>Lock screen<small>auto, 10 min</small></button>
+    </div>
+  </div></aside>
+
+  <div>
+    <header class="top">
+      <p class="crumbs">Central Health Centre / <b>Overview</b></p>
+      <label class="search"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><span class="sr">Search</span><input type="search" placeholder="Visit number, drug or staff"><kbd>Ctrl K</kbd></label>
+      <span class="sample" title="This pilot page uses sample figures">Sample data</span>
+    </header>
+
+    <main>
+      <div class="head">
+        <div>
+          <h1>Monday, 9 November</h1>
+          <p class="updated"><span class="live" aria-hidden="true"></span>Updated <time datetime="2026-11-09T10:42">10:42</time> from the registration desk and pharmacy</p>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="segmented" role="group" aria-label="Date range">
+          <button aria-pressed="true">Today</button><button aria-pressed="false">7 days</button><button aria-pressed="false">30 days</button><button aria-pressed="false">Custom</button>
+        </div>
+        <button class="dropdown"><svg class="icon" aria-hidden="true"><use href="#i-filter"/></svg>Department <span>All</span><svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+        <button class="dropdown">Shift <span>Day, 07:00 to 17:00</span><svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+        <button class="primary"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Create reorder request<span class="badge">2 items</span></button>
+      </div>
+
+      <section class="kpis" aria-label="Today at a glance">
+        <div class="kpi">
+          <p class="label">Visits so far</p>
+          <p class="value mono">99</p>
+          <svg class="spark" viewBox="0 0 96 32" aria-hidden="true"><polyline points="2.0,28.0 13.5,26.7 25.0,23.7 36.5,19.4 48.0,15.9 59.5,13.6 71.0,9.8 82.5,6.8 94.0,4.0"/><circle cx="94.0" cy="4.0" r="2.5"/></svg>
+          <p class="delta"><b class="good"><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg>18</b>vs 81 last Monday</p>
+        </div>
+        <div class="kpi">
+          <p class="label">Median wait, OPD</p>
+          <p class="value mono">38<small> min</small></p>
+          <svg class="spark bad" viewBox="0 0 96 32" aria-hidden="true"><polyline points="2.0,28.0 15.1,25.0 28.3,26.5 41.4,20.5 54.6,14.5 67.7,16.0 80.9,10.0 94.0,4.0"/><circle cx="94.0" cy="4.0" r="2.5"/></svg>
+          <p class="delta"><b class="bad"><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg>6 min</b>above the 32 min target</p>
+        </div>
+        <div class="kpi">
+          <p class="label">Drugs below reorder level</p>
+          <p class="value mono">5</p>
+          <span class="meter" aria-hidden="true"><i class="bad" style="flex: 2"></i><i class="warn" style="flex: 3"></i></span>
+          <p class="delta"><b class="bad">2 critical</b>under 5 days of stock</p>
+        </div>
+        <div class="kpi">
+          <p class="label">Staff on duty</p>
+          <p class="value mono">13<small> of 15</small></p>
+          <span class="meter" aria-hidden="true"><i class="on" style="flex: 13"></i><i class="bad" style="flex: 2"></i></span>
+          <p class="delta"><b class="bad">OPD short by 2</b>1 not clocked in</p>
+        </div>
+      </section>
+
+      <div class="row a">
+        <section class="panel" aria-labelledby="chart-title">
+          <div class="panel-head">
+            <h2 id="chart-title">Visits by hour</h2>
+            <div class="legend"><span><i class="now"></i>Today</span><span><i class="prev"></i>Last Monday</span></div>
+          </div>
+          <div class="chart-wrap">
+<svg class="chart" viewBox="0 0 720 232" role="img" aria-labelledby="chart-title chart-desc">
+<desc id="chart-desc">Visits per hour today compared with last Monday. Today: 9 at 7am, 29 at 8am, 38 at 9am, 23 so far at 10am.</desc>
+<line class="grid" x1="36" x2="708" y1="196.0" y2="196.0"/>
+<text class="tick" x="28" y="200.0" text-anchor="end">0</text>
+<line class="grid" x1="36" x2="708" y1="150.0" y2="150.0"/>
+<text class="tick" x="28" y="154.0" text-anchor="end">10</text>
+<line class="grid" x1="36" x2="708" y1="104.0" y2="104.0"/>
+<text class="tick" x="28" y="108.0" text-anchor="end">20</text>
+<line class="grid" x1="36" x2="708" y1="58.0" y2="58.0"/>
+<text class="tick" x="28" y="62.0" text-anchor="end">30</text>
+<line class="grid" x1="36" x2="708" y1="12.0" y2="12.0"/>
+<text class="tick" x="28" y="16.0" text-anchor="end">40</text>
+<rect class="bar-prev" x="47.6" y="168.4" width="20" height="27.6" rx="4"/>
+<rect class="bar-now" x="71.6" y="154.6" width="20" height="41.4" rx="4"><title>07:00 today: 9 visits</title></rect>
+<text class="tick" x="69.6" y="216" text-anchor="middle">07:00</text>
+<rect class="bar-prev" x="114.8" y="85.6" width="20" height="110.4" rx="4"/>
+<rect class="bar-now" x="138.8" y="62.6" width="20" height="133.4" rx="4"><title>08:00 today: 29 visits</title></rect>
+<text class="tick" x="136.8" y="216" text-anchor="middle">08:00</text>
+<rect class="bar-prev" x="182.0" y="53.4" width="20" height="142.6" rx="4"/>
+<rect class="bar-now" x="206.0" y="21.2" width="20" height="174.8" rx="4"><title>09:00 today: 38 visits</title></rect>
+<text class="tick" x="204.0" y="216" text-anchor="middle">09:00</text>
+<rect class="bar-prev" x="249.2" y="67.2" width="20" height="128.8" rx="4"/>
+<rect class="bar-now partial" x="273.2" y="90.2" width="20" height="105.8" rx="4"><title>10:00 today: 23 visits</title></rect>
+<text class="tick" x="271.2" y="216" text-anchor="middle">10:00</text>
+<rect class="bar-prev" x="316.4" y="94.8" width="20" height="101.2" rx="4"/>
+<text class="tick" x="338.4" y="216" text-anchor="middle">11:00</text>
+<rect class="bar-prev" x="383.6" y="127.0" width="20" height="69.0" rx="4"/>
+<text class="tick" x="405.6" y="216" text-anchor="middle">12:00</text>
+<rect class="bar-prev" x="450.8" y="113.2" width="20" height="82.8" rx="4"/>
+<text class="tick" x="472.8" y="216" text-anchor="middle">13:00</text>
+<rect class="bar-prev" x="518.0" y="122.4" width="20" height="73.6" rx="4"/>
+<text class="tick" x="540.0" y="216" text-anchor="middle">14:00</text>
+<rect class="bar-prev" x="585.2" y="140.8" width="20" height="55.2" rx="4"/>
+<text class="tick" x="607.2" y="216" text-anchor="middle">15:00</text>
+<rect class="bar-prev" x="652.4" y="159.2" width="20" height="36.8" rx="4"/>
+<text class="tick" x="674.4" y="216" text-anchor="middle">16:00</text>
+<line class="now" x1="285.3" x2="285.3" y1="12" y2="196"/>
+<text class="now-label" x="291.3" y="24">10:42</text>
+</svg>
+          </div>
+          <div class="mix">
+            <p class="mix-head"><b>By service so far</b><span>Busiest hour: 09:00, 38 visits</span></p>
+            <div class="mix-bar" aria-hidden="true"><i class="s1" style="flex: 61"></i><i class="s2" style="flex: 22"></i><i class="s3" style="flex: 9"></i><i class="s4" style="flex: 7"></i></div>
+            <ul class="mix-keys"><li><i class="s1"></i>OPD <b class="mono">61</b></li><li><i class="s2"></i>MCH <b class="mono">22</b></li><li><i class="s3"></i>Lab <b class="mono">9</b></li><li><i class="s4"></i>Pharmacy only <b class="mono">7</b></li></ul>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="now-title">
+          <div class="panel-head"><h2 id="now-title">Needs you now</h2><p>3 items</p></div>
+          <ul class="alerts">
+            <li>
+              <span class="dot danger"><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg></span>
+              <div><strong>Artemether-Lumefantrine: 2 days left</strong>
+                <p>14 packs at about 7 a day. KEMSA orders take 5 working days.</p>
+                <div class="acts"><button class="btn go">Add to reorder</button><button class="btn">Ask a nearby facility</button></div></div>
+            </li>
+            <li>
+              <span class="dot warning"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg></span>
+              <div><strong>11 OPD patients waiting over 45 min</strong>
+                <p>Two are triaged urgent and one is unassigned.</p>
+                <div class="acts"><button class="btn go">Open queue</button></div></div>
+            </li>
+            <li>
+              <span class="dot info"><svg class="icon" aria-hidden="true"><use href="#i-roster"/></svg></span>
+              <div><strong>Lab technician not clocked in</strong>
+                <p>S. Kamau was due at 08:00. <time>2h 42m</time></p>
+                <div class="acts"><button class="btn">Call</button><button class="btn">Mark on leave</button></div></div>
+            </li>
+          </ul>
+        </section>
+      </div>
+
+      <div class="row b">
+        <section class="panel" id="queue" aria-labelledby="queue-title">
+          <div class="panel-head"><h2 id="queue-title">Waiting now</h2><p>Longest wait first</p><a class="link" href="#">Full queue</a></div>
+          <div class="scroll">
+          <table>
+            <thead><tr><th scope="col">Visit</th><th scope="col">Patient</th><th scope="col">Service</th>
+              <th scope="col" class="num"><button aria-sort="descending">Waiting <svg class="icon" aria-hidden="true"><use href="#i-down"/></svg></button></th><th scope="col">Triage</th><th scope="col">With</th><th scope="col"><span class="sr">Actions</span></th></tr></thead>
+            <tbody>
+          <tr class="selected">
+            <td class="mono">V-0412</td>
+            <td><span class="patient"><span class="initials" aria-hidden="true">JK</span><span>J.K.<small>F, 34</small></span></span></td>
+            <td>OPD</td>
+            <td class="num"><span class="wait"><span class="wait-track"><span class="wait-fill danger" style="width: 83%"></span></span><span class="mono">62</span><small>min</small></span></td>
+            <td><span class="pill pill-danger">Urgent</span></td>
+            <td>Dr. Mutua</td>
+            <td class="row-action"><button class="icon-btn" aria-label="Actions for visit V-0412"><svg class="icon" aria-hidden="true"><use href="#i-more"/></svg></button></td>
+          </tr>
+          <tr>
+            <td class="mono">V-0415</td>
+            <td><span class="patient"><span class="initials" aria-hidden="true">AW</span><span>A.W.<small>M, 8</small></span></span></td>
+            <td>OPD</td>
+            <td class="num"><span class="wait"><span class="wait-track"><span class="wait-fill danger" style="width: 72%"></span></span><span class="mono">54</span><small>min</small></span></td>
+            <td><span class="pill">Normal</span></td>
+            <td>Dr. Mutua</td>
+            <td class="row-action"><button class="icon-btn" aria-label="Actions for visit V-0415"><svg class="icon" aria-hidden="true"><use href="#i-more"/></svg></button></td>
+          </tr>
+          <tr>
+            <td class="mono">V-0417</td>
+            <td><span class="patient"><span class="initials" aria-hidden="true">PN</span><span>P.N.<small>F, 27</small></span></span></td>
+            <td>MCH</td>
+            <td class="num"><span class="wait"><span class="wait-track"><span class="wait-fill danger" style="width: 63%"></span></span><span class="mono">47</span><small>min</small></span></td>
+            <td><span class="pill">Normal</span></td>
+            <td>N. Achieng</td>
+            <td class="row-action"><button class="icon-btn" aria-label="Actions for visit V-0417"><svg class="icon" aria-hidden="true"><use href="#i-more"/></svg></button></td>
+          </tr>
+          <tr>
+            <td class="mono">V-0421</td>
+            <td><span class="patient"><span class="initials" aria-hidden="true">SO</span><span>S.O.<small>M, 61</small></span></span></td>
+            <td>Lab</td>
+            <td class="num"><span class="wait"><span class="wait-track"><span class="wait-fill warning" style="width: 55%"></span></span><span class="mono">41</span><small>min</small></span></td>
+            <td><span class="pill pill-warning">Follow-up</span></td>
+            <td>J. Kamau</td>
+            <td class="row-action"><button class="icon-btn" aria-label="Actions for visit V-0421"><svg class="icon" aria-hidden="true"><use href="#i-more"/></svg></button></td>
+          </tr>
+          <tr>
+            <td class="mono">V-0423</td>
+            <td><span class="patient"><span class="initials" aria-hidden="true">MM</span><span>M.M.<small>F, 2</small></span></span></td>
+            <td>OPD</td>
+            <td class="num"><span class="wait"><span class="wait-track"><span class="wait-fill warning" style="width: 44%"></span></span><span class="mono">33</span><small>min</small></span></td>
+            <td><span class="pill pill-danger">Urgent</span></td>
+            <td class="unassigned">Unassigned</td>
+            <td class="row-action"><button class="icon-btn" aria-label="Actions for visit V-0423"><svg class="icon" aria-hidden="true"><use href="#i-more"/></svg></button></td>
+          </tr>
+          <tr>
+            <td class="mono">V-0426</td>
+            <td><span class="patient"><span class="initials" aria-hidden="true">RC</span><span>R.C.<small>F, 45</small></span></span></td>
+            <td>Pharmacy</td>
+            <td class="num"><span class="wait"><span class="wait-track"><span class="wait-fill ok" style="width: 24%"></span></span><span class="mono">18</span><small>min</small></span></td>
+            <td><span class="pill">Normal</span></td>
+            <td>M. Wairimu</td>
+            <td class="row-action"><button class="icon-btn" aria-label="Actions for visit V-0426"><svg class="icon" aria-hidden="true"><use href="#i-more"/></svg></button></td>
+          </tr>
+          <tr>
+            <td class="mono">V-0428</td>
+            <td><span class="patient"><span class="initials" aria-hidden="true">DK</span><span>D.K.<small>M, 19</small></span></span></td>
+            <td>OPD</td>
+            <td class="num"><span class="wait"><span class="wait-track"><span class="wait-fill ok" style="width: 16%"></span></span><span class="mono">12</span><small>min</small></span></td>
+            <td><span class="pill">Normal</span></td>
+            <td class="unassigned">Unassigned</td>
+            <td class="row-action"><button class="icon-btn" aria-label="Actions for visit V-0428"><svg class="icon" aria-hidden="true"><use href="#i-more"/></svg></button></td>
+          </tr>
+            </tbody>
+          </table>
+          </div>
+          <div class="table-foot"><span>7 of 23 waiting. Initials only on shared screens.</span><div class="pager"><button class="btn" disabled>Previous</button><button class="btn">Next</button></div></div>
+        </section>
+
+        <section class="panel" id="stock" aria-labelledby="stock-title">
+          <div class="panel-head"><h2 id="stock-title">Below reorder level</h2><p>2 selected</p><a class="link" href="#">All stock</a></div>
+          <div class="scroll">
+          <table>
+            <thead><tr><th scope="col"><span class="sr">Select</span></th><th scope="col">Item</th><th scope="col" class="num">In stock</th><th scope="col" class="num">Lasts</th></tr></thead>
+            <tbody>
+          <tr>
+            <td class="check-cell"><label class="check"><input type="checkbox" checked aria-label="Add Artemether-Lumefantrine to the reorder request"><span aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></span></label></td>
+            <td class="wrap"><span class="item">Artemether-Lumefantrine<small>20/120 tabs, packs of 24</small></span></td>
+            <td class="num"><span class="mono">14</span><small> / 60</small>
+              <span class="level"><span class="level-fill danger" style="width: 23%"></span></span></td>
+            <td class="num"><span class="pill pill-danger"><span class="mono">2</span>&nbsp;days</span></td>
+          </tr>
+          <tr>
+            <td class="check-cell"><label class="check"><input type="checkbox" checked aria-label="Add Amoxicillin 250mg to the reorder request"><span aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></span></label></td>
+            <td class="wrap"><span class="item">Amoxicillin 250mg<small>dispersible tabs</small></span></td>
+            <td class="num"><span class="mono">380</span><small> / 1,200</small>
+              <span class="level"><span class="level-fill danger" style="width: 32%"></span></span></td>
+            <td class="num"><span class="pill pill-danger"><span class="mono">4</span>&nbsp;days</span></td>
+          </tr>
+          <tr>
+            <td class="check-cell"><label class="check"><input type="checkbox" aria-label="Add Oral rehydration salts to the reorder request"><span aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></span></label></td>
+            <td class="wrap"><span class="item">Oral rehydration salts<small>sachets</small></span></td>
+            <td class="num"><span class="mono">95</span><small> / 300</small>
+              <span class="level"><span class="level-fill warning" style="width: 32%"></span></span></td>
+            <td class="num"><span class="pill pill-warning"><span class="mono">5</span>&nbsp;days</span></td>
+          </tr>
+          <tr>
+            <td class="check-cell"><label class="check"><input type="checkbox" aria-label="Add Oxytocin 10 IU to the reorder request"><span aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></span></label></td>
+            <td class="wrap"><span class="item">Oxytocin 10 IU<small>ampoules</small></span></td>
+            <td class="num"><span class="mono">22</span><small> / 40</small>
+              <span class="level"><span class="level-fill warning" style="width: 55%"></span></span></td>
+            <td class="num"><span class="pill pill-warning"><span class="mono">6</span>&nbsp;days</span></td>
+          </tr>
+          <tr>
+            <td class="check-cell"><label class="check"><input type="checkbox" aria-label="Add Metformin 500mg to the reorder request"><span aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></span></label></td>
+            <td class="wrap"><span class="item">Metformin 500mg<small>tabs</small></span></td>
+            <td class="num"><span class="mono">840</span><small> / 2,000</small>
+              <span class="level"><span class="level-fill warning" style="width: 42%"></span></span></td>
+            <td class="num"><span class="pill pill-warning"><span class="mono">9</span>&nbsp;days</span></td>
+          </tr>
+            </tbody>
+          </table>
+          </div>
+          <div class="table-foot"><span>Days left use the last 14 days of dispensing.</span></div>
+        </section>
+      </div>
+
+      <section class="panel" id="staff" aria-labelledby="staff-title" style="margin-top: 24px">
+        <div class="panel-head"><h2 id="staff-title">Staff on duty</h2><p>On duty / rostered, day shift</p><a class="link" href="#">Roster</a></div>
+        <ul class="depts">
+          <li class="dept">
+            <div class="dept-head"><strong>OPD</strong><span class="mono short">3<small> / 5</small></span></div>
+            <div class="avatars" aria-label="3 staff on duty"><span class="avatar">GM</span><span class="avatar">KM</span><span class="avatar">LO</span></div>
+            <p class="dept-note danger">2 short. 11 patients over 45 min.</p>
+          </li>
+          <li class="dept">
+            <div class="dept-head"><strong>MCH</strong><span class="mono ">4<small> / 3</small></span></div>
+            <div class="avatars" aria-label="4 staff on duty"><span class="avatar">NA</span><span class="avatar">WK</span><span class="avatar">JC</span><span class="avatar">EM</span></div>
+            <p class="dept-note success">1 more than rostered.</p>
+          </li>
+          <li class="dept">
+            <div class="dept-head"><strong>Laboratory</strong><span class="mono short">1<small> / 2</small></span></div>
+            <div class="avatars" aria-label="1 staff on duty"><span class="avatar">SK</span></div>
+            <p class="dept-note warning">1 not clocked in.</p>
+          </li>
+          <li class="dept">
+            <div class="dept-head"><strong>Pharmacy</strong><span class="mono ">2<small> / 2</small></span></div>
+            <div class="avatars" aria-label="2 staff on duty"><span class="avatar">MW</span><span class="avatar">TN</span></div>
+            <p class="dept-note neutral">As rostered.</p>
+          </li>
+          <li class="dept">
+            <div class="dept-head"><strong>Maternity</strong><span class="mono ">3<small> / 3</small></span></div>
+            <div class="avatars" aria-label="3 staff on duty"><span class="avatar">FO</span><span class="avatar">BN</span><span class="avatar">RA</span></div>
+            <p class="dept-note neutral">As rostered.</p>
+          </li>
+        </ul>
+        <div class="suggest"><svg class="icon" aria-hidden="true"><use href="#i-move"/></svg><span><b>Suggestion:</b> MCH has one nurse more than rostered while OPD is two short. Move one nurse to OPD until 13:00.</span><button class="btn go">Move N. Achieng</button></div>
+      </section>
+
+      <footer><span>Central Health Centre, Nairobi</span><span>Sample data for the handmade pilot. Not real patients.</span></footer>
+    </main>
+  </div>
+</div>
+</body>
+</html>

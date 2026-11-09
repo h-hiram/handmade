@@ -1,0 +1,29 @@
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+.hero {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 13px 18px;
+}
+
+.card {
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+  backdrop-filter: blur(12px);
+  margin: 22px;
+  transition: all 0.3s ease;
+}
+
+.panel { border-radius: 10px; padding: 10px; gap: 6px; }
+.chip { border-radius: 6px; }
+.modal { border-radius: 20px; }
+
+.title {
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.button:focus { outline: none; }
+
+@keyframes float { from { transform: translateY(0); } to { transform: translateY(-8px); } }

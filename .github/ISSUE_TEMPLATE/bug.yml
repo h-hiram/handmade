@@ -1,0 +1,30 @@
+name: Bug
+description: Something crashed or did the wrong thing
+labels: ["bug"]
+body:
+  - type: textarea
+    id: steps
+    attributes:
+      label: What did you run?
+      description: The exact command or the MCP tool call.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect and what happened?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: handmade version and Python version
+      description: handmade --version and python --version
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [macOS, Windows, Linux]

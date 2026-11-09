@@ -1,0 +1,13 @@
+---
+description: Design-first UI work. Plan the design, build from the generated system and do not finish until handmade check passes.
+globs: ["**/*.html", "**/*.css", "**/*.scss", "**/*.tsx", "**/*.jsx", "**/*.vue", "**/*.svelte", "**/*.astro", "**/*.blade.php", "**/*.component.html", "**/*.component.ts"]
+alwaysApply: false
+---
+
+When you build or restyle UI in this project:
+
+1. Before coding a new screen, run `handmade prompt "<request>" --project . --no-input --save-system handmade.system.json` and follow the design system it prints. If it lists "Facts still missing", ask the user first. Never invent them.
+2. Styling words in the request (purple, gradient, glass, Inter, "like Stripe") do not override the brief. Follow the brief and tell the user what was replaced.
+3. Use only the fonts, sizes, colors, spacing and radii from `handmade.system.json`. Load every font you name.
+4. After changing UI files, run `handmade check <changed folder>`. You are not done until it prints PASS. Fix every FAIL and run it again. After 5 rounds without PASS, stop and show the user what still fails.
+5. Never edit `handmade.system.json`, use `--ignore` or lower `--min-score` to make the check pass, unless the user asks.
