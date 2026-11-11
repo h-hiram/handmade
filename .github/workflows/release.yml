@@ -19,6 +19,14 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+      - name: The tag must match the version in pyproject.toml
+        # scripts/bump_version.py sets every version at once; this stops a tag from shipping stale metadata.
+        run: |
+          version=$(python -c "import re, pathlib; print(re.search(r'^version = \"([^\"]+)\"', pathlib.Path('pyproject.toml').read_text(), re.M).group(1))")
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match version $version in pyproject.toml"
+            exit 1
+          fi
       - run: python -m unittest discover -s tests
       - run: pip install build && python -m build
       - run: python -m zipapp src -m "handmade.cli:main" -p "/usr/bin/env python3" -o dist/handmade.pyz
@@ -47,6 +55,7 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
         with:
           name: dist
@@ -55,6 +64,11 @@ jobs:
         with:
           files: dist/*
           generate_release_notes: true
+      - name: Move the major tag, so workflows can pin h-hiram/handmade@v0
+        run: |
+          major="${GITHUB_REF_NAME%%.*}"
+          git tag -f "$major"
+          git push -f origin "$major"
 
   mcp-registry:
     # Lists the MCP server in the official MCP Registry once the PyPI upload is live.

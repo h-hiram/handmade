@@ -63,7 +63,13 @@ Keep weights honest. A tell that only some AI pages have should weigh less than 
 - No new runtime dependencies. handmade must run on plain Python.
 - Write code comments with `#`. Do not use docstrings.
 - Write docs in plain, short sentences. The project checks its own docs this way.
-- Run `python -m unittest discover -s tests` before you push. CI runs it on Linux, macOS and Windows.
+- Run `python -m unittest discover -s tests` before you push. CI runs it on Linux with Python 3.10, 3.12 and 3.13, plus the rendered-mode tests in a real browser.
+
+## Releasing
+
+1. Run `python scripts/bump_version.py X.Y.Z`. It sets the version in `pyproject.toml`, `src/handmade/__init__.py`, `server.json` and turns the "Unreleased" changelog entries into that version. A test fails if any of them disagree.
+2. Finish the changelog section, run the tests and commit.
+3. Push the tag: `git tag vX.Y.Z && git push origin vX.Y.Z`. The release workflow refuses a tag that does not match `pyproject.toml`. It publishes to PyPI, attaches `handmade.pyz` to the GitHub release, lists the MCP server in the registry and moves the `v0` tag.
 
 ## Good first issues
 
