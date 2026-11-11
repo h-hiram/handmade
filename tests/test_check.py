@@ -129,5 +129,18 @@ class StockPhotoPermissionTests(unittest.TestCase):
         self.assertIn("copy.stock-photos", self.tells(self.project("A barber fading a client's hair", None)))
 
 
+class RegistryMetadataTests(unittest.TestCase):
+    # The MCP Registry rejects a publish when these drift apart.
+    def test_server_json_matches_the_package(self):
+        import re
+        root = Path(__file__).resolve().parents[1]
+        server = json.loads((root / "server.json").read_text(encoding="utf-8"))
+        version = re.search(r'^version = "([^"]+)"', (root / "pyproject.toml").read_text(encoding="utf-8"), re.M).group(1)
+        self.assertEqual(server["version"], version)
+        self.assertEqual(server["packages"][0]["version"], version)
+        self.assertLessEqual(len(server["description"]), 100)
+        self.assertIn(f"mcp-name: {server['name']}", (root / "README.md").read_text(encoding="utf-8"))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -38,6 +38,7 @@
 
 **Project**
 
+- `server.json` and a release step list handmade in the official MCP Registry as `io.github.h-hiram/handmade`.
 - The comma style test was removed. The docstring test stays.
 
 ## 0.3.0

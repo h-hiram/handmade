@@ -55,3 +55,24 @@ jobs:
         with:
           files: dist/*
           generate_release_notes: true
+
+  mcp-registry:
+    # Lists the MCP server in the official MCP Registry once the PyPI upload is live.
+    # Needs no secret: the registry trusts GitHub's OIDC token for io.github.h-hiram/* names.
+    needs: pypi
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install mcp-publisher
+        run: curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
+      - run: ./mcp-publisher login github-oidc
+      - name: Publish (retries while PyPI makes the new version visible)
+        run: |
+          for attempt in 1 2 3 4 5; do
+            ./mcp-publisher publish && exit 0
+            sleep 30
+          done
+          exit 1

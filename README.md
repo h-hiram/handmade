@@ -1,5 +1,7 @@
 # handmade
 
+<!-- mcp-name: io.github.h-hiram/handmade -->
+
 **Build AI-generated interfaces that look intentionally engineered, not generated.**
 
 [![tests](https://github.com/h-hiram/handmade/actions/workflows/ci.yml/badge.svg)](https://github.com/h-hiram/handmade/actions/workflows/ci.yml)
