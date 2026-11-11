@@ -291,6 +291,23 @@ def _brief_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--save-system", metavar="FILE", help="also write the design system as JSON (use handmade.system.json)")
 
 
+def cmd_init(args) -> int:
+    from .editors import init
+    editors = None
+    if args.editor:
+        editors = list(EDITOR_CHOICES[:-1]) if args.editor == "all" else [args.editor]
+    for line in init(args.path, editors):
+        print(line)
+    print("")
+    print("Next: open this folder in your editor and ask its AI for a UI.")
+    print("The first time, the editor asks if you trust the handmade server. Say yes.")
+    print("When the AI first calls a handmade tool, choose the option to always allow it.")
+    return 0
+
+
+EDITOR_CHOICES = ("vscode", "cursor", "claude", "all")
+
+
 def cmd_mcp(args) -> int:
     from .mcp import main as mcp_main
     return mcp_main()
@@ -335,6 +352,11 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("tells", help="list every tell the scanner knows")
     p.add_argument("--format", choices=["text", "json"], default="text")
     p.set_defaults(func=cmd_tells)
+
+    p = sub.add_parser("init", help="connect handmade to VS Code, Cursor or Claude Code in this project")
+    p.add_argument("path", nargs="?", default=".")
+    p.add_argument("--editor", choices=EDITOR_CHOICES, help="which editor to set up (detected if not given)")
+    p.set_defaults(func=cmd_init)
 
     p = sub.add_parser("mcp", help="run the MCP server over stdio (for AI tools)")
     p.set_defaults(func=cmd_mcp)

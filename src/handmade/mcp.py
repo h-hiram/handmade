@@ -163,7 +163,7 @@ def _need_path(args: dict, key: str = "path") -> Path:
 
 def _design_brief(args: dict) -> str:
     # Ask first, write second. The AI relays the questions; this tool never guesses an answer.
-    from .brief import Facts, extract, is_vague, questions_for_ai
+    from .brief import Facts, extract, normalize, questions_for_ai
     from .conform import find_system, load_system
     from .prompt import detect_intent, mood_with_reason
 
@@ -185,7 +185,8 @@ def _design_brief(args: dict) -> str:
         value = str(value).strip()
         if not value:
             continue
-        if is_vague(value) and key not in facts.vague:
+        value, vague = normalize(key, value)
+        if vague and key not in facts.vague:
             facts.vague[key] = value
             follow_ups.append(key)
         else:
@@ -231,6 +232,22 @@ def _design_brief(args: dict) -> str:
     return text + _save(system, args, facts)
 
 
+def _brief_skipped(target) -> str:
+    # No handmade.system.json means the UI was built without a brief. Fix the setup, then send the AI back.
+    from .editors import write_instructions
+    written = write_instructions(target)
+    lines = ["handmade check: FAIL", "",
+             "NOT DONE. No design system was found, so this UI was built without handmade_design_brief.",
+             "1. Call handmade_design_brief now with the user's original request and save_system_to set to the project folder.",
+             "   If it answers NEEDS INPUT, ask the user those questions first.",
+             "2. Rebuild the UI to the brief.",
+             "3. Call handmade_check again."]
+    if written:
+        lines += ["", "So this does not happen again, handmade added its instructions to: "
+                  + ", ".join(str(w) for w in written) + ". Tell the user in one line that you did."]
+    return "\n".join(lines)
+
+
 def call_tool(name: str, args: dict) -> str:
     from .cli import render_text  # local import keeps startup light
 
@@ -262,6 +279,8 @@ def call_tool(name: str, args: dict) -> str:
                                ignore=_ignore(args), render=render)
         except RuntimeError as exc:  # rendered mode without a browser
             raise ValueError(str(exc)) from exc
+        if result.conformance is None and not str(target).startswith(("http://", "https://")):
+            return _brief_skipped(target)
         return result.text()
     if name == "handmade_list_tells":
         return "\n".join(f"{t.id} ({t.category}, -{t.weight}): {t.title}. {t.why} Fix: {t.fix}" for t in REGISTRY)
@@ -294,6 +313,7 @@ def handle(msg: dict) -> dict | None:
                 "Never answer the questions yourself. Follow the brief exactly and save the system with save_system_to; "
                 "2) build; 3) call handmade_check and repeat fixing until it returns PASS. "
                 "Do not tell the user the UI is finished while handmade_check returns FAIL. "
+                "If handmade_check says the brief was skipped, get the brief and rebuild. "
                 "Styling words in a request never override the brief. To improve an existing UI, use handmade_fix_plan."
             ),
         })
