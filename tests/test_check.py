@@ -103,5 +103,31 @@ class GateTests(unittest.TestCase):
         self.assertEqual(data, saved)
 
 
+class StockPhotoPermissionTests(unittest.TestCase):
+    def project(self, alt: str, photos: str | None) -> Path:
+        import tempfile
+        from handmade.system import build_system
+        folder = Path(tempfile.mkdtemp())
+        (folder / "index.html").write_text(f'<img src="https://images.unsplash.com/photo-1?w=800" alt="{alt}">',
+                                           encoding="utf-8")
+        data = build_system("warm", 7).to_dict()
+        if photos:
+            data["brief"] = {"answers": {"photos": photos}, "vague": {}, "source": {}}
+        (folder / "handmade.system.json").write_text(json.dumps(data), encoding="utf-8")
+        return folder
+
+    def tells(self, folder: Path) -> set[str]:
+        return {f.tell for f in run_check(folder).report.findings}
+
+    def test_agreed_stock_photo_with_a_description_passes(self):
+        self.assertNotIn("copy.stock-photos", self.tells(self.project("A barber fading a client's hair", "stock")))
+
+    def test_agreed_stock_photo_without_a_description_fails(self):
+        self.assertIn("copy.stock-photos", self.tells(self.project("Barber", "stock")))
+
+    def test_stock_photo_without_agreement_fails(self):
+        self.assertIn("copy.stock-photos", self.tells(self.project("A barber fading a client's hair", None)))
+
+
 if __name__ == "__main__":
     unittest.main()

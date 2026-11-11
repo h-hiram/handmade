@@ -36,6 +36,12 @@ class RenderTests(unittest.TestCase):
         from handmade.render import render_scan
         return {f.tell for f in render_scan("", ignore=set(ignore), data=data).findings}
 
+    def test_uneven_images_are_caught(self):
+        from handmade.render import collect
+        data = collect(ROOT / "tests" / "fixtures" / "uneven")
+        self.assertIn("layout.uneven-images", self.tells(data))
+        self.assertNotIn("layout.uneven-images", self.tells(self.after))
+
     def test_runtime_tricks_invisible_to_source_are_caught(self):
         from handmade.scan import scan
         self.assertEqual(scan(RUNTIME).findings, [])

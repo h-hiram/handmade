@@ -67,10 +67,10 @@ class Report:
         }
 
 
-def scan(path: str | Path, ignore: set[str] | None = None) -> Report:
+def scan(path: str | Path, ignore: set[str] | None = None, allow_stock: bool = False) -> Report:
     docs = load_docs(path)
     profile = build_profile(docs)
-    ctx = Context(docs=docs, profile=profile)
+    ctx = Context(docs=docs, profile=profile, allow_stock=allow_stock)
     findings: list[Finding] = []
     ignore = ignore or set()
     for t in REGISTRY:

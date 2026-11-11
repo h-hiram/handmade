@@ -19,7 +19,8 @@ from .colors import colors_in, contrast, distance, is_neutral, is_purple, parse_
 from .conform import PASS_THRESHOLDS, Conformance, _Collector, COLOR_TOLERANCE  # noqa: F401
 from .profile import GENERIC_FAMILIES, Profile, norm_font
 from .scan import Report
-from .tells import EMOJI, GENERIC_FONTS, GENERIC_HEAD, HYPE, PLACEHOLDER, TREND_FONTS, VANITY, Finding, REGISTRY
+from .tells import (EMOJI, GENERIC_FONTS, GENERIC_HEAD, HYPE, MARKED_PLACEHOLDER, PLACEHOLDER, STOCK_HOSTS, TREND_FONTS, VANITY,
+                    Finding, REGISTRY)
 
 VIEWPORTS = {"desktop": (1440, 900), "phone": (390, 844)}
 
@@ -67,6 +68,7 @@ COLLECT_JS = r"""
     out.push({
       sel: path(el), tag: el.tagName.toLowerCase(), text: own.slice(0, 120),
       role: el.getAttribute('role') || '', href: el.hasAttribute('href'), alt: el.hasAttribute('alt'),
+      src: el.tagName === 'IMG' ? (el.currentSrc || el.src || '') : '', altText: (el.getAttribute('alt') || '').slice(0, 120),
       x: r.left, y: r.top + window.scrollY, w: r.width, h: r.height,
       font: first, fontOk: own ? available(first) : true, fontSize: cs.fontSize, fontWeight: cs.fontWeight,
       color: cs.color, bg: cs.backgroundColor, bgImage: cs.backgroundImage, effBg: own ? effectiveBg(el) : '',
@@ -163,7 +165,7 @@ def _alpha(value: str) -> float:
     return float(m.group(1)) if m else 1.0
 
 
-def analyze(data: dict) -> list[Finding]:
+def analyze(data: dict, allow_stock: bool = False) -> list[Finding]:
     url = data["url"]
     findings: list[Finding] = []
 
@@ -220,6 +222,10 @@ def analyze(data: dict) -> list[Finding]:
                 add("deco.emoji-icons", f"{e['sel']} shows emoji: {e['text'][:30]}")
             if e["tag"] == "img" and not e["alt"]:
                 add("a11y.img-no-alt", f"{e['sel']} has no alt text")
+            alt_words = len(re.findall(r"[^\W\d_]+", e.get("altText", "")))
+            if e["tag"] == "img" and STOCK_HOSTS.search(e.get("src", "")) and not MARKED_PLACEHOLDER.search(e.get("altText", "")) \
+                    and not (allow_stock and alt_words >= 4):
+                add("copy.stock-photos", f"{e['sel']} loads {STOCK_HOSTS.search(e['src']).group(0)}")
         if vp_name == "desktop":
             rs = [e for e in els if max(_px(r) for r in e["radius"]) >= 12 and e["shadow"] not in ("", "none")
                   and max((float(n) for n in re.findall(r"(\d+(?:\.\d+)?)px", re.sub(r"rgba?\([^)]*\)", "", e["shadow"]))[2:3]), default=0) >= 10]
@@ -247,6 +253,17 @@ def analyze(data: dict) -> list[Finding]:
                            and h["y"] < e["y"] < h["y"] + h["h"] + 400]
                 if centered and _px(h["fontSize"]) >= 36 and len(actions) >= 2:
                     add("layout.centered-hero", f"centered {h['fontSize']} headline with {len(actions)} actions below")
+            # Images side by side that end up different heights
+            rows: dict[int, list] = {}
+            for e in els:
+                if e["tag"] == "img" and e["w"] >= 120 and e["h"] >= 80:
+                    rows.setdefault(round(e["y"] / 8), []).append(e)
+            for imgs in rows.values():
+                if len(imgs) >= 2:
+                    hs = [i["h"] for i in imgs]
+                    if max(hs) / min(hs) > 1.12:
+                        add("layout.uneven-images",
+                            f"{len(imgs)} images in one row range from {min(hs):.0f}px to {max(hs):.0f}px tall")
             # Three equal cards side by side
             groups: dict[str, list] = {}
             for e in els:
@@ -264,11 +281,12 @@ def analyze(data: dict) -> list[Finding]:
     return findings
 
 
-def render_scan(path: str | Path, ignore: set[str] | None = None, data: dict | None = None) -> Report:
+def render_scan(path: str | Path, ignore: set[str] | None = None, data: dict | None = None,
+                allow_stock: bool = False) -> Report:
     data = data or collect(path)
     ignore = ignore or set()
     cats = {t.id: t.category for t in REGISTRY}
-    findings = [f for f in analyze(data) if f.tell not in ignore and cats.get(f.tell) not in ignore]
+    findings = [f for f in analyze(data, allow_stock) if f.tell not in ignore and cats.get(f.tell) not in ignore]
     return Report(root=data["url"], profile=Profile(), findings=findings, files=[data["url"]])
 
 

@@ -87,8 +87,32 @@ class ScoreTests(unittest.TestCase):
     def test_every_tell_fires_somewhere_in_slop(self):
         found = tells_in(SLOP)
         never = {t.id for t in REGISTRY} - found - {"color.tasteful-default", "color.palette-sprawl", "layout.same-section-padding",
-                                                    "layout.center-everything"}
+                                                    "layout.center-everything",
+                                                    "layout.uneven-images"}  # uneven images need rendered mode
         self.assertFalse(never, f"tells with no slop coverage: {sorted(never)}")
+
+    def test_stock_photos_and_native_controls(self):
+        import tempfile
+        folder = Path(tempfile.mkdtemp())
+        page = folder / "index.html"
+        page.write_text('<img src="https://images.pexels.com/photos/1.jpeg" alt="Shop">'
+                        '<select><option>Cut</option></select>', encoding="utf-8")
+        self.assertTrue({"copy.stock-photos", "layout.native-controls"} <= {f.tell for f in scan(folder).findings})
+        # A photo marked as a placeholder and controls that are styled pass.
+        page.write_text('<img src="https://images.pexels.com/photos/1.jpeg" alt="[placeholder: photo of the shop front]">'
+                        '<select class="field"><option>Cut</option></select>'
+                        '<style>.field { appearance: none; }</style>', encoding="utf-8")
+        found = {f.tell for f in scan(folder).findings}
+        self.assertNotIn("copy.stock-photos", found)
+        self.assertNotIn("layout.native-controls", found)
+
+    def test_stock_photo_fails_the_gate(self):
+        import tempfile
+        from handmade.check import run_check
+        folder = Path(tempfile.mkdtemp())
+        (folder / "index.html").write_text('<img src="https://images.unsplash.com/photo-1?w=800" alt="Barber">',
+                                           encoding="utf-8")
+        self.assertFalse(run_check(folder).passed)
 
     def test_ignore_skips_a_category(self):
         report = scan(SLOP, ignore={"copy"})

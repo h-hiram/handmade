@@ -39,6 +39,7 @@ class Tell:
 class Context:
     docs: list[Doc]
     profile: Profile
+    allow_stock: bool = False  # the user agreed to stock photos in the brief
 
 
 REGISTRY: list[Tell] = []
@@ -801,6 +802,87 @@ def _transition_all(ctx: Context) -> list[Finding]:
     hits = _token_hits(ctx, "motion.transition-all", re.compile(r"^transition-all$"))
     hits += _decl_hits(ctx, "motion.transition-all", lambda p, v: p == "transition" and v.startswith("all"), lambda p, v: f"{p}: {v}")
     return hits if len(hits) >= 3 else []
+
+
+# ---------- content and craft ----------
+
+# Free stock photo hosts. A hotlinked photo from these is almost never the business's own.
+STOCK_HOSTS = re.compile(
+    r"(?:images|plus|source)\.unsplash\.com|unsplash\.com/photos|images\.pexels\.com|cdn\.pixabay\.com|pixabay\.com/get"
+    r"|picsum\.photos|loremflickr\.com|randomuser\.me|i\.pravatar\.cc|placehold\.co|via\.placeholder\.com"
+    r"|dummyimage\.com|placekitten\.com|images\.generated\.photos|thispersondoesnotexist\.com", re.I)
+# Words that show a photo is knowingly a stand-in for the real one.
+MARKED_PLACEHOLDER = re.compile(r"placeholder|replace|stand-in|sample photo|\[photo|data-slot", re.I)
+STOCK_USE = re.compile(r"<(?:img|Image|NuxtImg|source)\b[^>]*>|url\(\s*['\"]?[^)'\"]+['\"]?\s*\)|\bsrc\s*[:=]\s*['\"`][^'\"`]+['\"`]",
+                       re.I)
+
+
+def described(tag: str) -> bool:
+    # A stock photo the user agreed to must say what it shows, in alt text of at least four words.
+    m = re.search(r"\balt\s*=\s*['\"]([^'\"]*)['\"]", tag)
+    return bool(m) and len(re.findall(r"[^\W\d_]+", m.group(1))) >= 4
+
+
+@tell("copy.stock-photos", "copy", 6, "Hotlinked stock photos",
+      "Photos pulled from Unsplash or Pexels rarely show the product's real people or place. "
+      "They are an invented fact, like a made-up price.",
+      "Use the business's own photos. If there are none yet, mark each image as a placeholder in its alt text, "
+      "for example alt=\"[photo of the shop front]\". If the user agreed to stock photos in the brief, "
+      "describe each photo in its alt text.")
+def _stock_photos(ctx: Context) -> list[Finding]:
+    out = []
+    for doc in ctx.docs:
+        n = 0
+        for m in STOCK_USE.finditer(doc.text):
+            chunk = m.group(0)
+            host = STOCK_HOSTS.search(chunk)
+            if not host:
+                continue
+            if ctx.allow_stock and described(chunk):
+                continue
+            before = doc.text[max(0, m.start() - 160):m.start()]
+            if MARKED_PLACEHOLDER.search(chunk) or re.search(r"(?:<!--|/\*|//)[^\n]*(?:placeholder|replace)", before, re.I):
+                continue
+            out.append(Finding("copy.stock-photos", doc.rel, doc.line(m.start()), host.group(0)))
+            n += 1
+            if n >= MAX_PER_FILE:
+                break
+    return out
+
+
+NATIVE_INPUT = re.compile(r"<input\b[^>]*\btype\s*=\s*['\"]?(date|time|datetime-local|month|week|color|file)\b[^>]*>", re.I)
+NATIVE_SELECT = re.compile(r"<select\b", re.I)
+
+
+@tell("layout.native-controls", "layout", 4, "Browser-default form controls",
+      "Unstyled date, time, file and select controls look different in every browser and break the design.",
+      "Style them from the design system: set appearance: none, add your own arrow or calendar icon, "
+      "and keep the native input underneath for accessibility.")
+def _native_controls(ctx: Context) -> list[Finding]:
+    styled = False
+    for doc in ctx.docs:
+        if re.search(r"appearance\s*:\s*none|::-webkit-calendar-picker-indicator|::file-selector-button|::-webkit-file-upload-button",
+                     doc.text, re.I) or any(base(tok) == "appearance-none" for _l, tok in doc.tokens):
+            styled = True
+            break
+    if styled:
+        return []
+    out = []
+    for doc in ctx.docs:
+        if doc.kind not in ("markup", "script"):
+            continue
+        hits = [(m.start(), f"<input type=\"{m.group(1)}\">") for m in NATIVE_INPUT.finditer(doc.text)]
+        hits += [(m.start(), "<select>") for m in NATIVE_SELECT.finditer(doc.text)]
+        for pos, label in sorted(hits)[:MAX_PER_FILE]:
+            out.append(Finding("layout.native-controls", doc.rel, doc.line(pos), label))
+    return out
+
+
+@tell("layout.uneven-images", "layout", 4, "Uneven images in a row",
+      "Images side by side with different heights make names and captions under them misalign.",
+      "Give images in a row one aspect ratio with aspect-ratio and object-fit: cover.")
+def _uneven_images(ctx: Context) -> list[Finding]:
+    return []  # needs real sizes, so only rendered mode can see it
 
 
 def by_id() -> dict[str, Tell]:

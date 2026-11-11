@@ -19,7 +19,7 @@ DEFAULT_MIN_SCORE = 85
 HARD_TELLS = {
     "color.purple-gradient", "color.indigo-accent", "color.neon-glow", "color.tasteful-default",
     "type.gradient-text", "type.generic-font", "type.trend-font", "deco.glassmorphism", "deco.stock-effects",
-    "deco.emoji-icons", "deco.blur-blob", "layout.centered-hero",
+    "deco.emoji-icons", "deco.blur-blob", "layout.centered-hero", "copy.stock-photos",
 }
 
 
@@ -65,6 +65,7 @@ class CheckResult:
         if self.conformance is None:
             lines.append("skip Design system: no handmade.system.json found, so only AI defaults were checked.")
             lines.append("     Create one with: handmade prompt \"...\" --save-system handmade.system.json")
+            lines.append("     Built by an AI tool? Run `handmade init` in the project so the AI gets a brief first.")
         else:
             lines.append(f"Design system: {self.system_path}")
             for cat, need in PASS_THRESHOLDS.items():
@@ -84,6 +85,8 @@ class CheckResult:
         lines.append("")
         if self.passed:
             lines.append("Done: no AI defaults above the threshold and everything comes from the design system.")
+            if self.report.findings:
+                lines.append("Notes are listed above. They do not block a PASS, but fix them if you can.")
         else:
             lines.append("NOT DONE. Fix every FAIL above, then run handmade check again.")
         return "\n".join(lines)
@@ -91,15 +94,17 @@ class CheckResult:
 
 def run_check(path: str | Path, system_path: str | Path | None = None, min_score: int = DEFAULT_MIN_SCORE,
               ignore: set[str] | None = None, render: bool = False) -> CheckResult:
+    is_url = str(path).startswith(("http://", "https://"))
+    sys_file = Path(system_path) if system_path else (None if is_url else find_system(path))
+    system = load_system(sys_file) if sys_file is not None else None
+    allow_stock = bool(system) and system.get("brief", {}).get("answers", {}).get("photos") == "stock"
     if render:
         from .render import render_scan  # optional dependency (Playwright)
-        report = render_scan(path, ignore=ignore)
+        report = render_scan(path, ignore=ignore, allow_stock=allow_stock)
     else:
-        report = scan(path, ignore=ignore)
-    sys_file = Path(system_path) if system_path else find_system(path)
+        report = scan(path, ignore=ignore, allow_stock=allow_stock)
     conformance = None
-    if sys_file is not None:
-        system = load_system(sys_file)
+    if system is not None:
         if render:
             from .render import render_conformance
             conformance = render_conformance(path, system)
