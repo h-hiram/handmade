@@ -99,11 +99,15 @@ DOMAINS: tuple[Domain, ...] = (
 GENERIC_DOMAIN = Domain("general", (), (("goal", "What should a person be able to do on this screen?", "book an appointment"),), "")
 
 
+# Words that say little about the trade: a "barber shop" is a barber before it is a shop.
+WEAK_WORDS = {"shop", "store", "app", "tool", "platform", "public", "software", "kiosk"}
+
+
 def detect_domain(text: str) -> Domain:
     low = text.lower()
-    best, best_hits = GENERIC_DOMAIN, 0
+    best, best_hits = GENERIC_DOMAIN, 0.0
     for d in DOMAINS:
-        hits = sum(1 for w in d.words if re.search(rf"\b{re.escape(w)}s?\b", low))
+        hits = sum(0.5 if w in WEAK_WORDS else 1 for w in d.words if re.search(rf"\b{re.escape(w)}s?\b", low))
         if hits > best_hits:
             best, best_hits = d, hits
     return best
@@ -150,6 +154,36 @@ def is_vague(answer: str) -> bool:
     return len(specific) == 0 or (len(words) <= 2 and len(specific) <= 1 and len(specific[0]) < 4)
 
 
+# ---------- photos ----------
+
+PHOTO_INTENTS = ("landing", "ecommerce", "portfolio", "app")
+
+
+def photo_choice(answer: str) -> str:
+    # Reads the answer to "own photos or stock?" as own, stock or none. Returns "" when it cannot tell.
+    low = answer.lower().strip()
+    lacks = re.search(r"\b(?:don'?t|do not|haven'?t|no)\b[^.]*\b(?:have|photos|pictures|images)\b|\bnone\b|\bnot yet\b", low)
+    if re.search(r"stock|unsplash|pexels|pixabay|free (?:photos|images|pictures)", low) \
+            and not re.search(r"\bno(?:t)? (?:stock|unsplash|pexels)", low):
+        return "stock"
+    if re.search(r"\b(?:our|my) own\b|\bown (?:photos|pictures|images)\b|\b(?:we|i) (?:have|took|shot)\b|\bours\b", low) \
+            and not lacks:
+        return "own"
+    if re.fullmatch(r"(?:yes|yeah|yep|sure|ok(?:ay)?|fine|go ahead)[.! ]*", low):
+        return "stock"
+    if lacks or re.fullmatch(r"(?:no|nope)[.! ]*", low):
+        return "none"
+    return ""
+
+
+def normalize(key: str, answer: str) -> tuple[str, bool]:
+    # Returns the value to store and whether it is still too vague to use.
+    if key == "photos":
+        choice = photo_choice(answer)
+        return (choice or answer), not choice
+    return answer, is_vague(answer)
+
+
 # ---------- the interview ----------
 
 MOOD_CHOICES = ("editorial", "utilitarian", "warm", "playful", "technical", "luxury", "civic")
@@ -186,6 +220,16 @@ class Facts:
         return f
 
 
+# What a visitor does next on a landing page, by trade. Examples only, never stored as answers.
+LANDING_GOALS = {
+    "food": "order a cake on WhatsApp", "retail": "find a product and order it", "hospitality": "book a haircut for Saturday",
+    "health": "book an appointment", "education": "apply for the next intake", "finance": "open an account",
+    "government": "apply for a permit", "software": "start a free trial", "transport": "book a delivery",
+    "events": "register for a seat", "portfolio": "invite you to an interview", "news": "subscribe to the newsletter",
+    "agriculture": "check this week's prices",
+}
+
+
 def plan(request: str, facts: Facts, intent: str, suggested_mood: str, mood_reason: str = "") -> list[Question]:
     # The questions still worth asking, in the order a designer would ask them.
     domain = detect_domain(" ".join([request, facts.get("product")]))
@@ -209,18 +253,24 @@ def plan(request: str, facts: Facts, intent: str, suggested_mood: str, mood_reas
         "portfolio": ("goal", "What should a visitor do after looking?", "invite you to an interview"),
         "app": ("goal", "What is the main task on this screen?", "pay this term's fees"),
     }[intent]
+    if intent == "landing":
+        goal_q = (goal_q[0], goal_q[1], LANDING_GOALS.get(domain.name, "contact you on WhatsApp"))
     if not facts.get("goal"):
         qs.append(Question(goal_q[0], goal_q[1], goal_q[2], f"Name one concrete action. For example: {goal_q[2]}."))
     for key, text, example in domain.questions:
         if not facts.get(key):
             qs.append(Question(key, text, example, f"A specific answer helps most. For example: {example}.", optional=True))
+    if intent in PHOTO_INTENTS and not facts.get("photos"):
+        qs.append(Question("photos", "Do you have your own photos? If not, may we use free stock photos for now?",
+                           "we have photos of the shop, or: stock photos are fine for now",
+                           "Say 'our own', 'stock is fine' or 'none yet'.", optional=True))
     if not facts.get("mood"):
         qs.append(Question("mood", f"Which mood fits? {', '.join(MOOD_CHOICES)}. Press Enter for {suggested_mood}"
                             + (f" ({mood_reason})." if mood_reason else "."),
                            suggested_mood, "", optional=True))
     if not facts.get("reference"):
         qs.append(Question("reference", "Is there a website, magazine, place or object whose feel you like?",
-                           "the chalkboard menus in old Nairobi bakeries", "", optional=True))
+                           "a shop sign, a magazine or a place you like the look of", "", optional=True))
     return qs
 
 
@@ -246,10 +296,12 @@ def interview(request: str, facts: Facts, intent: str, suggested_mood: str, ask:
             continue
         if not answer:
             continue
-        if is_vague(answer):
+        answer, vague = normalize(q.key, answer)
+        if vague:
             better = ask(f"  {q.follow_up}\n> ").strip() if q.follow_up else ""
-            if better and not is_vague(better):
-                answer = better
+            value, still_vague = normalize(q.key, better) if better else ("", True)
+            if better and not still_vague:
+                answer = value
             else:
                 facts.vague[q.key] = better or answer
                 continue
@@ -259,7 +311,7 @@ def interview(request: str, facts: Facts, intent: str, suggested_mood: str, ask:
 
 
 QUESTION_LABELS = {
-    "product": "What it is", "audience": "Who uses it and on what device", "goal": "What a person should do here",
+    "product": "What it is", "audience": "Who uses it and on what device", "photos": "Where the photos come from", "goal": "What a person should do here",
     "place": "Where it is", "mood": "Mood", "reference": "A reference the user likes",
     "ordering": "How customers buy", "best_sellers": "Best sellers", "hours": "Opening hours",
     "catalogue": "Products and categories", "buying": "How people pay and collect", "trust": "Why people trust them",

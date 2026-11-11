@@ -305,7 +305,7 @@ def screen_request(text: str, system: DesignSystem | None = None, allow: tuple[s
 
 # Explicit page names outrank loose words: "landing page for my bakery shop" is a landing page.
 EXPLICIT_PAGES: tuple[tuple[str, str], ...] = (
-    ("landing", r"\blanding page|\bhome ?page\b|\bmarketing (?:page|site)\b"),
+    ("landing", r"\blanding page|\bhome ?page\b|\bmarketing (?:page|site)\b|\bbooking (?:page|site|website)\b|\bwebsite\b"),
     ("dashboard", r"\bdashboards?\b|\badmin (?:panel|page|area)\b"),
     ("form", r"\bforms?\b|\bsign ?up\b|\bregistration\b|\bcheckout\b|\blog ?in (?:page|screen)\b"),
     ("ecommerce", r"\bonline (?:store|shop)\b|\be-?commerce\b|\bproduct (?:listing|page|grid)\b|\bcart\b"),
@@ -389,7 +389,8 @@ def _system_section(system: DesignSystem, mood_note: str = "") -> str:
         "",
         "Spacing and shape:",
         f"- Spacing scale in px: {space}. No other values.",
-        f"- Corner radius: {system.radius[0]}px for controls, {system.radius[1]}px for containers. No other radii.",
+        f"- Corner radius: {system.radius[0]}px for controls, {system.radius[1]}px for containers. No other radii. "
+        "Use them: buttons, inputs, cards, images and panels get these soft corners. Sharp corners everywhere look as unplanned as huge ones.",
         f"- Depth ({system.mood.depth}): {DEPTH_RULES[system.mood.depth]}",
         f"- Shadow `raised`: `{system.shadows['raised']}`.",
         f"- Shadow `overlay`: `{system.shadows['overlay']}`. No other shadows.",
@@ -571,12 +572,46 @@ def build_prompt(brief: Brief, profile: Profile | None = None, report: Report | 
         "",
         _system_section(system, mood_note),
         "",
+        *_images_section(brief, intent),
         _common_tail(intent, extra, brief.allow),
         "",
         _system_json(system),
         "",
     ])
     return text, system
+
+
+def _images_section(brief: "Brief", intent: str) -> list[str]:
+    # Tells the AI where photos may come from and what each one must show. Photos are facts too.
+    if intent in ("dashboard", "docs", "form"):
+        return []
+    photos = brief.answers.get("photos", "")
+    subject = brief.product or "the product"
+    place = brief.answers.get("place", "")
+    where = f" in {place}" if place else ""
+    people = brief.audience or "the people who really use it"
+    shots = [
+        f"Main image: {subject}{where} as it really is. Its real setting, natural light, nothing staged.",
+        f"Detail: a close crop of what {subject} offers, such as the work itself or the product in hand.",
+        f"People: {people}{where}. They should look like the real customers in that market.",
+    ]
+    lines = ["## Images", ""]
+    if photos == "own":
+        lines.append("The user has their own photos. Ask for them. Until they arrive, use one marked slot per image below, "
+                     "for example `<img alt=\"[photo: main image of the shop]\">` on a `surface` block.")
+    elif photos == "stock":
+        lines.append("The user agreed to free stock photos for now. For each image below, pick a photo from Unsplash or Pexels "
+                     "that matches the description: the people, the place and the light. Skip any photo that shows a "
+                     "different country, culture or kind of business. Write the description in the alt text, "
+                     "so a person can check the match.")
+    else:
+        lines.append("Nobody has agreed where photos come from. Do not hotlink stock photos. Use one marked slot per image "
+                     "below, for example `<img alt=\"[photo: main image of the shop]\">` on a `surface` block. "
+                     "Ask the user if they have photos.")
+    lines += ["", *[f"- {s}" for s in shots], "",
+              "Images in one row share one aspect ratio. Use `aspect-ratio` and `object-fit: cover`. "
+              "Corners follow the container radius.", ""]
+    return lines
 
 
 def build_fix_prompt(report: Report, brief: Brief | None = None, variant: int = 0) -> tuple[str, DesignSystem]:
