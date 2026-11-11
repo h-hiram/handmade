@@ -16,7 +16,7 @@ AI-built interfaces look alike because models pick the most common choice at eve
 Run `handmade --version`. If it is missing, install it:
 
 ```bash
-pip install handmade || pip install git+https://github.com/h-hiram/handmade
+pipx install handmade || pip install handmade
 ```
 
 If nothing can be installed, follow "Without the tool" at the end.

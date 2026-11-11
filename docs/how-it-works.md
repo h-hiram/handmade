@@ -49,7 +49,7 @@ Reads any CSS color format and turns it into hex: hex, `rgb()`, `hsl()`, `oklch(
 
 ### The rules: `tells.py`
 
-Each of the 40 tells is a small function with an ID, a category, a weight, a reason and a fix. It returns findings with a file and line. A tell is a signal, not proof.
+Each of the 43 tells is a small function with an ID, a category, a weight, a reason and a fix. It returns findings with a file and line. A tell is a signal, not proof.
 
 ### Scoring: `scan.py`
 

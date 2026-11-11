@@ -3,11 +3,12 @@
 **Build AI-generated interfaces that look intentionally engineered, not generated.**
 
 [![tests](https://github.com/h-hiram/handmade/actions/workflows/ci.yml/badge.svg)](https://github.com/h-hiram/handmade/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/handmade)](https://pypi.org/project/handmade/)
 ![python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
-![Baseline AI landing page compared against interface nuilt through handmade](docs/images/landing-desktop.png)
+![Baseline AI landing page compared against interface built through handmade](docs/images/landing-desktop.png)
 
 Most generative UI models converge on identical design clichés: ubiquitous Inter typography, indigo primary buttons, purple mesh gradients and uniform three-column card grids.
 
@@ -15,13 +16,13 @@ Most generative UI models converge on identical design clichés: ubiquitous Inte
 
 1. **Pre-generation (Brief Synthesis):** Detects unstated domain parameters through targeted clarification rather than allowing models to hallucinate business facts. Emits an exhaustive design brief and formal token schema (`handmade.system.json`).
 2. **Generation (Guidance):** Injects strict typographic scales, calibrated palettes, and layout constraints directly into model context.
-3. **Post-generation (Static & Computed Verification):** `handmade check` audits source ASTs and computed DOM states, failing code that drifts outside token specifications.
+3. **Post-generation (Static & Computed Verification):** `handmade check` audits source files and computed DOM states, failing code that drifts outside token specifications.
 
 Runs entirely offline. Zero runtime dependencies. No API keys required.
 
 ```bash
-pip install git+https://github.com/h-hiram/handmade
-handmade prompt "build a booking page for my salon" --save-system handmade.system.json
+pipx install handmade
+handmade prompt "build a booking page for my salon" --save-system handmade.system.json -o prompt.md
 handmade check .
 ```
 
@@ -47,42 +48,73 @@ handmade check .
 Supplementary architectural documentation:
 
 - [`TESTING.md`](TESTING.md): Step-by-step local validation procedures.
-- [`docs/how-it-works.md`](docs/how-it-works.md): Abstract syntax analysis algorithms and token compilation internals.
+- [`docs/how-it-works.md`](docs/how-it-works.md): Pattern extraction, scoring and token compilation internals.
 - [`docs/test-report.md`](docs/test-report.md): Benchmark results, evasion analysis, and coverage data.
 
 ---
 
 ## 1. Installation
 
-Requires Python 3.10+.
+Requires Python 3.10+. Published on [PyPI](https://pypi.org/project/handmade/).
 
 ```bash
-# Standard environment install
-pip install git+https://github.com/h-hiram/handmade
+# Recommended: isolated CLI install, available in every project
+pipx install handmade
+
+# Or into the current Python environment
+pip install handmade
 ```
 
 Alternative deployment vectors:
 
 ```bash
-# Isolated CLI installation via pipx
-pipx install git+https://github.com/h-hiram/handmade
+# Run once without installing (uv)
+uvx handmade scan .
 
-# Ephemeral execution via uv
-uvx --from git+https://github.com/h-hiram/handmade handmade scan .
-
-# Standalone binary distribution (zero installation footprint)
+# Single-file build: runs with plain Python, nothing to install
 curl -LO https://github.com/h-hiram/handmade/releases/latest/download/handmade.pyz
 python3 handmade.pyz scan .
+
+# Latest unreleased code from main
+pipx install git+https://github.com/h-hiram/handmade
 ```
+
+### Using uv
+
+`handmade` runs under [uv](https://docs.astral.sh/uv/) without a separate install:
+
+```bash
+uvx handmade scan .                          # one-off run of any command
+uvx handmade check .
+uv tool install handmade                     # permanent install, same as pipx
+uvx playwright install chromium               # once, for rendered mode
+uvx --from "handmade[render]" handmade check --render http://localhost:5173
+```
+
+The MCP server is a second command in the same package, so name the package with `--from`:
+
+```bash
+claude mcp add handmade -- uvx --from handmade handmade-mcp
+```
+
+```json
+{ "mcpServers": { "handmade": { "command": "uvx", "args": ["--from", "handmade", "handmade-mcp"] } } }
+```
+
+`uvx handmade init` writes this uvx form automatically, because a one-off uvx run has no fixed install path.
+
+Verify the install with `handmade --version`. Upgrade later with `pipx upgrade handmade`, `uv tool upgrade handmade` or `pip install -U handmade`.
 
 ### Headless DOM Evaluation (Optional Dependency)
 
 Auditing computed styles, runtime CSS-in-JS injections, dynamic webfont resolution, and real luminance contrast requires Playwright:
 
 ```bash
-pip install "handmade[render] @ git+https://github.com/h-hiram/handmade"
+pipx install "handmade[render]" --include-deps   # --include-deps exposes the playwright command
 playwright install chromium
 ```
+
+If handmade is already installed with pipx, add `--force`. In a regular virtual environment, use `pip install "handmade[render]"` instead.
 
 ---
 
@@ -169,6 +201,16 @@ Eliminating boilerplate AI patterns is only the baseline. Generated briefs enfor
 
 Design systems provide chromatic neutral scales, functional semantic status palettes, categorical chart colors that explicitly avoid generic saturated violets, calibrated elevation scales, and archetype-aligned depth models.
 
+### Imagery Provenance
+
+Photographs are treated as business facts. For pages that carry imagery, the brief asks whether the user has their own photos or consents to free stock photography.
+
+- **Own photos:** the agent places marked image slots (`alt="[photo: ...]"`) until real assets are supplied.
+- **Stock consent:** the brief lists each required image with its subject, location and audience. The agent selects matching Unsplash or Pexels photos and records the description in `alt` text for review.
+- **No answer:** hotlinked stock photos fail `handmade check`. Marked slots pass.
+
+Corner radii are part of the token schema. Every mood uses soft radii for controls and containers, so neither oversized nor uniformly square corners are the default.
+
 ---
 
 ## 4. Adversarial Prompt Neutralization
@@ -206,7 +248,8 @@ Obfuscation techniques, such as CSS variable aliasing, `oklch()` color expressio
 | `handmade scan <path>` | Evaluates files against design heuristics and emits diagnostic repair instructions |
 | `handmade fix <path>` | Analyzes non-compliant code and drafts an automated remediation prompt |
 | `handmade profile <path>` | Extracts token distribution metrics (typography, palette, spacing, radii) |
-| `handmade tells` | Outputs catalog of the 40 audited model signatures and heuristics |
+| `handmade tells` | Outputs catalog of the 43 audited model signatures and heuristics |
+| `handmade init` | Registers the MCP server with VS Code, Cursor or Claude Code for the current project |
 | `handmade mcp` | Launches the Model Context Protocol (MCP) server over standard I/O |
 
 ### `handmade prompt`
@@ -236,7 +279,7 @@ Supported visual archetypes: `editorial`, `utilitarian`, `warm`, `playful`, `tec
 
 ### `handmade check`
 
-Evaluates source ASTs or live endpoints against `handmade.system.json`.
+Evaluates source files or live endpoints against `handmade.system.json`.
 
 ```bash
 handmade check .
@@ -250,10 +293,13 @@ Diagnostic failure report example:
 handmade check: FAIL
 
 FAIL AI defaults: score 48/100 (Clearly AI defaults), needs 85 and no signature defaults
+     Signature AI defaults found (each one fails the check): Centered hero with two buttons, Colored glow shadows, ...
+     - Purple to blue or pink gradient: index.html:13 background: linear-gradient(135deg, #7c3aed 0%, ...
+       Fix: Drop the gradient. Use one flat brand color chosen for the product and a tinted neutral background.
+
+Design system: handmade.system.json
 FAIL fonts         0% from the system (1 values), needs 100%
-- inter at index.html:11
 FAIL colors       47% from the system (15 values), needs 95%
-- #7c3aed x3 at index.html:13
 
 NOT DONE. Fix every FAIL above, then run handmade check again.
 ```
@@ -283,7 +329,7 @@ Supported output formats: `text`, `json`, `md`, and `github`. Supports script-le
 
 ## 6. Headless Runtime Evaluation (Rendered Mode)
 
-Dynamic stylesheet generation, runtime CSS-in-JS injection, and webfont loading failures cannot be fully audited via static AST analysis alone.
+Dynamic stylesheet generation, runtime CSS-in-JS injection, and webfont loading failures cannot be fully audited via static source analysis alone.
 
 Rendered mode loads local servers or remote deployments in a headless Chromium environment across desktop (1440px) and mobile (390px) viewports. It analyzes computed DOM properties, verifies real text-to-background WCAG luminance contrast, and flags unloaded font fallbacks:
 
@@ -292,7 +338,7 @@ handmade scan --render http://localhost:5173
 handmade check --render http://localhost:5173
 ```
 
-**Example:** A test fixture assembling a purple linear gradient dynamically via JavaScript string concatenation scores 100/100 during static AST analysis. In rendered mode, the computed CSS tree is captured and correctly flagged as a failure.
+**Example:** A test fixture assembling a purple linear gradient dynamically via JavaScript string concatenation scores 100/100 during static source analysis. In rendered mode, the computed CSS tree is captured and correctly flagged as a failure.
 
 ---
 
@@ -300,13 +346,22 @@ handmade check --render http://localhost:5173
 
 ### Model Context Protocol (MCP)
 
-Register `handmade` as a native MCP server:
+One-step project setup:
+
+```bash
+cd your-project
+handmade init                 # detects the editor; or --editor vscode|cursor|claude|all
+```
+
+`init` writes the server entry (`.vscode/mcp.json`, `.cursor/mcp.json` or `.mcp.json`) and keeps any existing servers. For VS Code it also sets `chat.mcp.autostart`, so the server starts when a chat needs it. It writes no instruction files. If an agent later calls `handmade_check` without first requesting a brief, the check fails and handmade adds its instructions to that editor's rules file, so the next request starts with a brief.
+
+Manual registration:
 
 ```bash
 claude mcp add handmade -- handmade-mcp
 ```
 
-JSON configuration for Claude Desktop, Cursor, Windsurf or project-level `.mcp.json`:
+JSON configuration for Claude Desktop, Cursor, Windsurf or project-level `.mcp.json`. Editors may not share your shell's `PATH`; if the server does not start, replace `handmade-mcp` with the full path from `which handmade-mcp` (`where.exe handmade-mcp` on Windows):
 
 ```json
 {
@@ -332,16 +387,28 @@ The server injects behavioral instructions directing agents to acquire a brief p
 
 ### Agent Skills & Rules
 
-- **Claude Code / Agent Skills:** Deploy to local skill registries:
+- **Claude Code / Agent Skills:** The skill files ship with the repository, not the PyPI package:
 
   ```bash
-  mkdir -p ~/.claude/skills && cp -r skills/handmade ~/.claude/skills/
+  git clone --depth 1 https://github.com/h-hiram/handmade /tmp/handmade
+  mkdir -p ~/.claude/skills && cp -r /tmp/handmade/skills/handmade ~/.claude/skills/
   ```
 
   See [`skills/README.md`](skills/README.md).
 
-- **Cursor IDE:** Copy `integrations/cursor/handmade.mdc` to `.cursor/rules/`.
-- **Copilot / Custom Agents:** Append `integrations/AGENTS.md` into workspace agent instructions.
+- **Cursor IDE:** Add the rule file to your project:
+
+  ```bash
+  mkdir -p .cursor/rules
+  curl -L -o .cursor/rules/handmade.mdc https://raw.githubusercontent.com/h-hiram/handmade/main/integrations/cursor/handmade.mdc
+  ```
+- **Copilot / Custom Agents:** Append the shared instructions to your project's `AGENTS.md`:
+
+  ```bash
+  curl -L https://raw.githubusercontent.com/h-hiram/handmade/main/integrations/AGENTS.md >> AGENTS.md
+  ```
+
+  This step is optional. When an agent skips the brief, `handmade_check` adds these instructions for that editor automatically.
 
 ---
 
@@ -360,7 +427,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Audit design tokens and anti-patterns
         uses: h-hiram/handmade@v0.3.0
@@ -375,7 +442,7 @@ Violations are annotated directly on the pull request diff. Jobs terminate with 
 
 ## 9. Language & Framework Parser Support
 
-The AST parser identifies style declarations, token utilities and structural markup across most modern UI stacks:
+The source extractor identifies style declarations, token utilities and structural markup across most modern UI stacks:
 
 | Ecosystem | Analyzed Files & Syntaxes |
 | --- | --- |
@@ -384,8 +451,8 @@ The AST parser identifies style declarations, token utilities and structural mar
 | Tailwind CSS | `class`, `className`, `cn()`, `clsx()`, `@apply`, `tailwind.config.*`, Tailwind v4 `@theme` |
 | React | `.jsx`, `.tsx`, inline style objects `style={{ }}`, styled-components, Emotion |
 | Vue | `.vue` single-file components, dynamic `:class`, `:style` bindings |
-| Svelte | `.svelte` templates, `class:list` directives |
-| Astro & MDX | `.astro`, `.mdx` component layouts |
+| Svelte | `.svelte` templates, `class` attributes, `<style>` blocks |
+| Astro & MDX | `.astro`, `.mdx` component layouts, Astro `class:list` |
 | Laravel Blade | `.blade.php` templates, `@class([...])` directive mappings |
 | Angular | `.component.html`, `[ngClass]`, `[ngStyle]`, inline component metadata |
 | Dynamic Web Apps | Any running HTTP service via `--render` |
@@ -396,16 +463,16 @@ Parses color tokens across formats: Hex (`#RGB`, `#RRGGBB`, `#RRGGBBAA`), RGB/RG
 
 ## 10. Audited Heuristics & Signatures (Tells)
 
-The analyzer audits codebases against 40 deterministic heuristic signatures:
+The analyzer audits codebases against 43 deterministic heuristic signatures:
 
 | Category | Audited Signatures |
 | --- | --- |
 | Typography | Defaulting exclusively to Inter or Roboto; unrendered/broken font declarations; multi-stop gradient text masking |
 | Palette | Saturated violet/purple linear gradients; uncalibrated indigo call-to-actions; cream/terracotta clichés; high-spread neon box-shadows |
 | Surfaces | Unbacked backdrop-blur panels (glassmorphism); standalone emoji icons; pastel rounded icon containers; unconstrained decorative blurred blobs |
-| Layout | Symmetrical 3-card desktop blocks; center-aligned hero sections with twin buttons; uniform bento grids lacking structural hierarchy |
+| Layout | Symmetrical 3-card desktop blocks; center-aligned hero sections with twin buttons; uniform bento grids lacking structural hierarchy; browser-default date, time and select controls; image rows with uneven heights (rendered mode) |
 | Metrics | Arbitrary off-grid dimensions; inconsistent corner radius scales; high variance in margin/padding distributions |
-| Content Copy | Hallucinated domain metrics (e.g., "10,000+ users"); marketing filler terms ("unlock", "seamless", "supercharge"); Latin placeholder text |
+| Content Copy | Hallucinated domain metrics (e.g., "10,000+ users"); marketing filler terms ("unlock", "seamless", "supercharge"); Latin placeholder text; hotlinked stock photography without user consent |
 | Accessibility | Suppressed focus rings (`outline: none` without replacement); insufficient WCAG text contrast ratios; missing image `alt` attributes |
 | Motion | CSS animations lacking `prefers-reduced-motion` media query fallbacks |
 
@@ -415,7 +482,7 @@ Run `handmade tells` to review the exhaustive heuristic directory. Individual ch
 
 ## 11. Empirical Verification & Benchmarks
 
-The testing suite contains 115 test cases covering parser accuracy, token synthesis, and heuristic detection. Full diagnostic logs are indexed in [`docs/test-report.md`](docs/test-report.md).
+The testing suite contains 130 test cases covering parser accuracy, token synthesis, and heuristic detection. Full diagnostic logs are indexed in [`docs/test-report.md`](docs/test-report.md).
 
 | Evaluated System / Codebase | Verification Score |
 | --- | --- |
@@ -428,7 +495,7 @@ Additional validation metrics:
 - **Evasion Detection:** Successfully flags all 12 obfuscation techniques cataloged in `tests/fixtures/tricks/`.
 - **Regression Sensitivity:** 10 targeted minor styling modifications to passing baselines reliably transition state from PASS to FAIL.
 - **Adversarial Resilience:** 4 out of 4 hostile prompt injections neutralized during parameter extraction.
-- **Pilot Artifacts:** 3 end-to-end applications compiled via `handmade` prompts achieve PASS under both static AST and headless browser evaluation.
+- **Pilot Artifacts:** 3 end-to-end applications compiled via `handmade` prompts achieve PASS under both static source and headless browser evaluation.
 
 The registration workflow maintains required semantic slots for legal entity names, processing fees, and regulatory licenses as unrendered tokens (`[license_number]`), completely eliminating placeholder hallucinations.
 
@@ -439,7 +506,7 @@ Independent validation can be executed across arbitrary third-party models using
 ## 12. Operational Boundaries & Scope
 
 - **Structural vs. Aesthetic Quality:** Verification proves the absence of common model signatures and enforces strict token adherence; it cannot assess higher-level artistic direction.
-- **Static vs. Runtime Coverage:** Static AST auditing cannot evaluate styles computed dynamically at runtime. Dynamic inspection requires `--render`.
+- **Static vs. Runtime Coverage:** Static source auditing cannot evaluate styles computed dynamically at runtime. Dynamic inspection requires `--render`.
 - **Raster Inspection:** The engine does not perform computer vision auditing on embedded bitmap or vector assets.
 - **Agent Compliance:** Downstream language models may occasionally disregard prompt system instructions. The CLI assertion (`check`) serves as the definitive gate.
 

@@ -18,7 +18,8 @@ The tests run without installing handmade. The 4 rendered-mode tests are skipped
 | `test_prompt.py` | Request screening, mood choice, contrast of every generated palette, craft tokens and reuse of project tokens. |
 | `test_brief.py` | Facts read from the request, domain questions, vague answers and missing facts listed instead of invented. |
 | `test_mcp.py` | The MCP server, started as a separate process the way AI tools start it, including the ask-first flow. |
-| `test_style.py` | House style: `#` comments instead of docstrings and no comma before "and" or "or". |
+| `test_editors.py` | `handmade init` and the fallback that adds instructions when an AI skips the brief. |
+| `test_style.py` | House style: `#` comments instead of docstrings. |
 | `test_render.py` | Rendered mode in headless Chrome. |
 
 ## Fixtures

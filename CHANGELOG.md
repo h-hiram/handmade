@@ -1,5 +1,45 @@
 # Changelog
 
+## 0.3.1
+
+**Setup**
+
+- `handmade init` registers the MCP server for VS Code, Cursor or Claude Code in one step. It keeps existing servers and, for VS Code, turns on server autostart.
+- If an agent calls `handmade_check` without a brief, the check fails. It tells the agent to get the brief and rebuild. It also adds handmade's instructions to that editor's rules file. Nothing is written up front.
+
+**Photos**
+
+- The brief asks whether the user has their own photos or agrees to free stock photos.
+- A new Images section in the brief describes each photo the page needs: subject, place and people.
+- Hotlinked stock photos fail the check unless the user agreed to them or they are marked as placeholders. Agreed stock photos need a description in their alt text.
+
+**New checks**
+
+- Browser-default date, time, file and select controls are flagged.
+- Images side by side with different heights are flagged in rendered mode.
+- A PASS that still has notes now asks the agent to fix them.
+
+**Better questions**
+
+- A "barber shop" is read as a service business, not a retail shop. A "booking page" or "website" is read as a landing page.
+- Example answers now fit the trade. A barber is no longer shown a cake order as an example.
+
+**Design**
+
+- Softer corners. Moods that used square corners now use small radii, and the brief asks for them on buttons, inputs, cards and images.
+
+**Docs**
+
+- Install commands now use PyPI: `pipx install handmade` or `pip install handmade`. A PyPI badge was added.
+- A uv section covers `uvx`, `uv tool install` and the MCP server through uvx.
+- `uvx handmade init` points the editor at uvx instead of a temporary cache path.
+- Skill, Cursor rule and AGENTS.md setup commands work without cloning the repo by hand.
+- The README no longer says handmade parses syntax trees. It reads source files with pattern matching.
+
+**Project**
+
+- The comma style test was removed. The docstring test stays.
+
 ## 0.3.0
 
 **Asks instead of guessing**

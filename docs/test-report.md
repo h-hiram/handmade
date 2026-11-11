@@ -12,7 +12,7 @@ Date: 9 November 2026. Everything below can be reproduced with the commands at t
 | Does it raise false alarms on human-designed code? | GOV.UK Frontend scores 97 of 100. Each false alarm found during testing was fixed and given a regression test. |
 | Does following the generated prompt pass the gate? | Yes, in the pilot: 3 of 3 pages pass in source and rendered mode. |
 | Does it guess facts the user never gave? | No. Missing facts are asked for or listed under "Facts still missing". Through MCP, the brief is withheld until the user answers or chooses to skip. |
-| Test suite | 115 tests, all passing. 4 rendered-mode tests need Playwright and Chrome and are skipped without them. |
+| Test suite | 130 tests, all passing. 5 rendered-mode tests need Playwright and Chrome and are skipped without them. |
 
 ## 1. Request screening
 
@@ -119,7 +119,7 @@ The clinic dashboard and the SACCO form were rebuilt for 0.3.0 from the new brie
 ## Reproduce
 
 ```bash
-python -m unittest discover -s tests -v          # 115 tests
+python -m unittest discover -s tests -v          # 130 tests
 python benchmark/bench.py robustness             # request screening
 python benchmark/bench.py score                  # pilot runs
 handmade check examples/landing/before.html      # FAIL

@@ -67,16 +67,17 @@ You should see `handmade 0.3.0`.
 python -m unittest discover -s tests -v
 ```
 
-You should see `Ran 115 tests` and `OK` at the end. Without rendered mode installed, it says `OK (skipped=4)`. That is expected: those 4 tests need a browser.
+You should see `Ran 130 tests` and `OK` at the end. Without rendered mode installed, it says `OK (skipped=5)`. That is expected: those 5 tests need a browser.
 
 What the test files cover:
 
 | File | What it proves |
 |---|---|
-| `test_scanner.py` | Each of the 40 tells fires in every language and human-designed patterns do not |
+| `test_scanner.py` | Each of the 43 tells fires in every language and human-designed patterns do not |
 | `test_tricks.py` | 12 ways of hiding AI defaults are all caught |
 | `test_check.py` | The gate passes a correct page and fails 10 kinds of sneaky change |
 | `test_prompt.py` | Requests are screened, palettes pass contrast, project tokens are kept, craft tokens are readable |
+| `test_editors.py` | `handmade init` keeps other servers, and a check without a brief sends the AI back |
 | `test_brief.py` | Facts come from the request, vague answers get a follow-up and nothing missing is invented |
 | `test_mcp.py` | The MCP server works when started the way an AI tool starts it |
 | `test_render.py` | Rendered mode catches what only the browser can see |
@@ -203,7 +204,16 @@ echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | handmade-mcp
 '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | handmade-mcp
 ```
 
-Then connect it to an AI tool. AI tools do not use your virtual environment, so give the full path to the command:
+Then connect it to an AI tool. The easy way is to run this in the project the AI will work in, with your virtual environment active:
+
+```bash
+cd ~/Desktop/barber-site
+handmade init
+```
+
+It writes the full path for you. Then open that folder in VS Code, Cursor or Claude Code.
+
+To do it by hand instead, give the full path to the command. AI tools do not use your virtual environment:
 
 ```bash
 # macOS and Linux: prints the full path

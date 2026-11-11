@@ -1,6 +1,9 @@
 # Connect the handmade MCP server
 
-Install first: `pip install handmade` (or `pip install git+https://github.com/h-hiram/handmade`).
+The quickest way is to run `handmade init` in your project. It writes the right file for VS Code, Cursor or Claude Code. The rest of this page shows each file by hand.
+
+
+Install first: `pipx install handmade` (or `pip install handmade`).
 Then add the server to your AI tool. All of them start `handmade-mcp` over stdio.
 
 ## Claude Code
@@ -71,10 +74,10 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 
 ## Without installing (uv)
 
-If you use [uv](https://docs.astral.sh/uv/), any client can run it straight from GitHub:
+If you use [uv](https://docs.astral.sh/uv/), any client can run it straight from PyPI:
 
 ```json
-{ "command": "uvx", "args": ["--from", "git+https://github.com/h-hiram/handmade", "handmade-mcp"] }
+{ "command": "uvx", "args": ["--from", "handmade", "handmade-mcp"] }
 ```
 
 ## Tools
