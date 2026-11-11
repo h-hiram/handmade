@@ -6,6 +6,7 @@ import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 
+from .colors import without_strings
 from .extract import Doc
 
 TW_FAMILIES = (
@@ -312,7 +313,7 @@ def build_profile(docs: list[Doc]) -> Profile:
                     p.fonts_used[f].append((doc.rel, line))
                 if named and prop != "font":
                     p.primary_fonts[named[0]] += 1
-            for h in HEX.findall(val):
+            for h in HEX.findall(without_strings(val)):
                 p.hexes[norm_hex(h)] += 1
             if prop == "border-radius":
                 p.radii[val] += 1

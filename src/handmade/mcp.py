@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from . import __version__
+from .brief import Facts
 from .prompt import Brief, build_fix_prompt, build_prompt, questions, screen_request
 from .scan import scan
 from .system import MOODS
@@ -104,6 +105,8 @@ TOOLS = [
             "properties": {
                 "path": {"type": "string", "description": "Absolute path to the project or folder."},
                 "ignore": {"type": "string", "description": "Comma-separated tell IDs or categories to skip."},
+                "fresh": {"type": "boolean", "description": "Ignore a saved handmade.system.json in the project and generate a new system. "
+                          "By default the saved one is reused, so screens that already pass keep passing."},
                 **_BRIEF_PROPS,
             },
             "required": ["path"],
@@ -116,7 +119,9 @@ TOOLS = [
             "and every font, color, size, radius and spacing value comes from handmade.system.json. "
             "Call it after every UI change. You are NOT done until it returns PASS. On FAIL, fix every listed item and "
             "call it again. After 5 rounds without PASS, stop and show the user what still fails. "
-            "Use render=true with a URL (for example http://localhost:3000) for apps whose styles are built at runtime."
+            "Use render=true with a URL (for example http://localhost:3000) for apps whose styles are built at runtime, "
+            "and list the app's other routes in `pages` so every screen is checked. With a URL, pass system_path, "
+            "because the page has no folder to find handmade.system.json in."
         ),
         "inputSchema": {
             "type": "object",
@@ -124,6 +129,9 @@ TOOLS = [
                 "path": {"type": "string", "description": "Absolute path to a folder or file or a URL when render is true."},
                 "system_path": {"type": "string", "description": "Absolute path of handmade.system.json. Found automatically if omitted."},
                 "render": {"type": "boolean", "default": False, "description": "Check the rendered page in headless Chrome."},
+                "pages": {"type": "array", "items": {"type": "string"},
+                          "description": "With render: more pages of the same app to check, as routes such as '/pricing' "
+                                         "or full URLs. One result covers every page."},
                 "min_score": {"type": "integer", "default": 85, "minimum": 0, "maximum": 100,
                               "description": "Lowest AI-default score (0 to 100) that can still pass. Keep 85 unless the user asks."},
                 "ignore": {"type": "string", "description": "Comma-separated tell IDs to skip. Only with the user's agreement."},
@@ -177,7 +185,7 @@ def _need_path(args: dict, key: str = "path") -> Path:
 
 def _design_brief(args: dict) -> str:
     # Ask first, write second. The AI relays the questions; this tool never guesses an answer.
-    from .brief import Facts, extract, normalize, questions_for_ai
+    from .brief import extract, normalize, questions_for_ai
     from .conform import find_system, load_system
     from .prompt import detect_intent, mood_with_reason
 
@@ -246,16 +254,19 @@ def _design_brief(args: dict) -> str:
     return text + _save(system, args, facts)
 
 
-def _brief_skipped(target) -> str:
+def _brief_skipped(target, is_url: bool = False) -> str:
     # No handmade.system.json means the UI was built without a brief. Fix the setup, then send the AI back.
-    from .editors import write_instructions
-    written = write_instructions(target)
     lines = ["handmade check: FAIL", "",
              "NOT DONE. No design system was found, so this UI was built without handmade_design_brief.",
              "1. Call handmade_design_brief now with the user's original request and save_system_to set to the project folder.",
              "   If it answers NEEDS INPUT, ask the user those questions first.",
              "2. Rebuild the UI to the brief.",
              "3. Call handmade_check again."]
+    if is_url:
+        lines.append("   For a URL, pass system_path: the absolute path of the project's handmade.system.json.")
+        return "\n".join(lines)
+    from .editors import write_instructions
+    written = write_instructions(target)  # only editors already present in the project; nothing is created on a guess
     if written:
         lines += ["", "So this does not happen again, handmade added its instructions to: "
                   + ", ".join(str(w) for w in written) + ". Tell the user in one line that you did."]
@@ -280,26 +291,34 @@ def call_tool(name: str, args: dict) -> str:
     if name == "handmade_design_brief":
         return _design_brief(args)
     if name == "handmade_fix_plan":
-        report = scan(_need_path(args), ignore=_ignore(args))
+        from .conform import find_system, load_system
+        target = _need_path(args)
+        report = scan(target, ignore=_ignore(args))
         if not report.files:
             return f"No UI files found in {report.root}."
-        text, system = build_fix_prompt(report, _brief(args), variant=int(args.get("variant") or 0))
-        return text + _save(system, args)
+        found = None if args.get("fresh") else find_system(target)
+        saved = load_system(found) if found else None  # keep the system the project already builds to
+        text, system = build_fix_prompt(report, _brief(args), variant=int(args.get("variant") or 0), saved_system=saved)
+        return text + _save(system, args, Facts.from_dict(saved.get("brief", {})) if saved else None)
     if name == "handmade_check":
         from .check import run_check
         render = bool(args.get("render"))
         raw = args.get("path")
         if not raw:
             raise ValueError("'path' is required")
-        target = raw if (render and str(raw).startswith(("http://", "https://"))) else _need_path(args)
+        is_url = str(raw).startswith(("http://", "https://"))
+        target = raw if (render and is_url) else _need_path(args)
         system_path = _need_path(args, "system_path") if args.get("system_path") else None
+        pages = [str(p) for p in (args.get("pages") or [])]
         try:
             result = run_check(target, system_path=system_path, min_score=int(args.get("min_score") or 85),
-                               ignore=_ignore(args), render=render)
-        except RuntimeError as exc:  # rendered mode without a browser
+                               ignore=_ignore(args), render=render, pages=pages)
+        except RuntimeError as exc:  # rendered mode without a browser, or a page that did not open
             raise ValueError(str(exc)) from exc
-        if result.conformance is None and not str(target).startswith(("http://", "https://")):
-            return _brief_skipped(target)
+        if not result.report.files and not render:
+            return f"No UI files found in {target}."
+        if result.conformance is None:
+            return _brief_skipped(target, is_url=is_url)
         return result.text()
     if name == "handmade_list_tells":
         return "\n".join(f"{t.id} ({t.category}, -{t.weight}): {t.title}. {t.why} Fix: {t.fix}" for t in REGISTRY)
@@ -338,6 +357,10 @@ def handle(msg: dict) -> dict | None:
         })
     if method == "ping":
         return ok({})
+    if method in ("prompts/list", "resources/list", "resources/templates/list"):
+        # Some clients probe these without checking capabilities. An empty list is quieter than an error.
+        key = {"prompts/list": "prompts", "resources/list": "resources", "resources/templates/list": "resourceTemplates"}[method]
+        return ok({key: []})
     if method == "tools/list":
         return ok({"tools": TOOLS})
     if method == "tools/call":

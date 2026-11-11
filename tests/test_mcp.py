@@ -135,6 +135,16 @@ class McpServerTests(unittest.TestCase):
         self.assertIn("path not found", res["content"][0]["text"])
         self.assertEqual(self.send("ping")["result"], {})
 
+    def test_list_probes_get_empty_lists_not_errors(self):
+        self.handshake()
+        self.assertEqual(self.send("prompts/list")["result"], {"prompts": []})
+        self.assertEqual(self.send("resources/list")["result"], {"resources": []})
+
+    def test_check_tool_takes_pages(self):
+        self.handshake()
+        tools = {t["name"]: t for t in self.send("tools/list")["result"]["tools"]}
+        self.assertEqual(tools["handmade_check"]["inputSchema"]["properties"]["pages"]["type"], "array")
+
     def test_unknown_method_and_tool(self):
         self.handshake()
         self.assertEqual(self.send("nope")["error"]["code"], -32601)
