@@ -20,3 +20,5 @@ handmade check examples/landing/after.html    # PASS
 ```
 
 Open both HTML files in a browser to compare them. The fonts load from Google Fonts, so you need to be online.
+
+The README hero image is rendered from these two files by `python scripts/hero_image.py`, so it always shows what the tool really produces.

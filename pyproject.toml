@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "handmade"
-version = "0.3.1"
+version = "0.3.2"
 description = "Make AI build interfaces that look designed: screen the request, generate a design system and gate the result."
 readme = "README.md"
 requires-python = ">=3.10"

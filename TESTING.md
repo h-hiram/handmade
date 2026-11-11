@@ -59,7 +59,7 @@ Check it worked:
 handmade --version
 ```
 
-You should see `handmade 0.3.0`.
+You should see `handmade 0.3.2`.
 
 ## 3. Run the test suite
 
@@ -67,7 +67,7 @@ You should see `handmade 0.3.0`.
 python -m unittest discover -s tests -v
 ```
 
-You should see `Ran 130 tests` and `OK` at the end. Without rendered mode installed, it says `OK (skipped=5)`. That is expected: those 5 tests need a browser.
+You should see `OK` at the end. Without rendered mode installed, it says `OK (skipped=6)`. That is expected: those tests need a browser.
 
 What the test files cover:
 
@@ -80,7 +80,8 @@ What the test files cover:
 | `test_editors.py` | `handmade init` keeps other servers, and a check without a brief sends the AI back |
 | `test_brief.py` | Facts come from the request, vague answers get a follow-up and nothing missing is invented |
 | `test_mcp.py` | The MCP server works when started the way an AI tool starts it |
-| `test_render.py` | Rendered mode catches what only the browser can see |
+| `test_render.py` | Rendered mode catches what only the browser can see, and several pages merge into one result |
+| `test_release.py` | The version in `pyproject.toml`, `__init__.py`, `server.json` and the changelog agree |
 
 ## 4. Try each command
 
@@ -189,8 +190,10 @@ handmade check path/to/project/src
 If the app builds its styles at runtime, start it locally and check the running page too:
 
 ```bash
-handmade check http://localhost:4200 --render
+handmade check http://localhost:4200 --render --page /login --page /dashboard
 ```
+
+Run it from the project folder, so the check finds `handmade.system.json`, or pass `--system`. Each `--page` is another route of the app. One run checks them all.
 
 ## 6. Test the MCP server
 
@@ -278,8 +281,8 @@ jobs:
   handmade:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: h-hiram/handmade@main
+      - uses: actions/checkout@v7
+      - uses: h-hiram/handmade@v0
         with:
           path: src
           enforce: "false"
@@ -297,12 +300,12 @@ Open a pull request. Problems appear as warnings on the changed lines.
 | `No Chrome or Chromium found` | Run `playwright install chromium` or install Google Chrome |
 | Rendered mode says a font did not load | Expected offline: Google Fonts needs internet. Online, it means the font really failed |
 | The AI tool does not see the MCP server | Use the full path to `handmade-mcp`, then restart the tool completely |
-| `check` says no `handmade.system.json` | Create one with `handmade prompt ... --save-system handmade.system.json` or pass `--system` |
+| `check` says no `handmade.system.json` | Create one with `handmade prompt ... --save-system handmade.system.json` or pass `--system`. For a URL, run the check from the project folder |
 | A tell fires on code you think is fine | Open an issue with the code and the tell ID. For now, skip it with `--ignore <tell-id>` |
 
 ## Checklist
 
-- [ ] `handmade --version` prints 0.3.0
+- [ ] `handmade --version` prints 0.3.2
 - [ ] The test suite says OK
 - [ ] `before.html` fails the gate and `after.html` passes
 - [ ] A hostile request is screened and `--allow` keeps a brand choice

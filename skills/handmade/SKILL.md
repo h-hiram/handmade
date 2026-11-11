@@ -66,8 +66,10 @@ handmade check <folder you changed>
 For apps whose styles are built at runtime (React, Vue, Angular, Next.js and similar), also check the running page:
 
 ```bash
-handmade check http://localhost:3000 --render
+handmade check http://localhost:3000 --render --page /pricing --page /signup --system handmade.system.json
 ```
+
+List every route you built with `--page`. One run checks them all. Pass `--system` or run from the project root, because a URL has no folder to find the design system in.
 
 ## Improving an existing UI
 
