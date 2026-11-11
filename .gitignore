@@ -14,3 +14,4 @@ benchmark/runs/*
 
 # your private notes, kept next to the repo but never pushed
 owner-notes/
+.vscode/
