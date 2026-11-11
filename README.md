@@ -10,7 +10,15 @@
 ![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
-![Baseline AI landing page compared against interface built through handmade](docs/images/landing-desktop.png)
+![One request built twice. Left: the plain AI result, a purple gradient hero with Inter and three feature cards. Right: the result through handmade, a left-aligned headline next to a live week board.](docs/images/hero.png)
+
+One request, `build a landing page for Taskline, a task tracker for small teams`, built twice by the same model. Both pages are in [`examples/saas`](examples/saas).
+
+| | Plain request | Same request through handmade |
+|---|---|---|
+| `handmade check` | **FAIL**, score 15/100 | **PASS**, score 100/100 |
+| What the scanner found | Inter as the only typeface, purple gradient hero, gradient headline text, pill badge above the headline, centered hero with two buttons, three equal feature cards, emoji icons, sparkle motif, blurred blobs, glassmorphism, colored glows, hype copy, invented stats and quotes, `transition: all`, animation without reduced motion | Nothing. Every font, color, size, radius and spacing value comes from the generated `handmade.system.json`, and the rendered page passes too |
+| What it shows | A slogan and three promises | The product itself, with named customers, real prices and marked slots where a fact was not given |
 
 Most generative UI models converge on identical design clichés: ubiquitous Inter typography, indigo primary buttons, purple mesh gradients and uniform three-column card grids.
 
@@ -286,8 +294,10 @@ Evaluates source files or live endpoints against `handmade.system.json`.
 ```bash
 handmade check .
 handmade check src --system design/handmade.system.json
-handmade check http://localhost:3000 --render
+handmade check http://localhost:3000 --render --page /pricing --page /signup
 ```
+
+A URL has no folder, so a rendered check reads `handmade.system.json` from the directory you run it in, or from `--system`. Add `--page` for every other route of the app. One browser session checks them all, one PASS covers every page, and each finding names the page it was seen on.
 
 Diagnostic failure report example:
 
@@ -338,7 +348,10 @@ Rendered mode loads local servers or remote deployments in a headless Chromium e
 ```bash
 handmade scan --render http://localhost:5173
 handmade check --render http://localhost:5173
+handmade check --render http://localhost:5173 --page /pricing --page /account --system handmade.system.json
 ```
+
+`--page` takes a route or a full URL and can be repeated. Every page opens in the same browser session and the result is one PASS or FAIL for the whole app.
 
 **Example:** A test fixture assembling a purple linear gradient dynamically via JavaScript string concatenation scores 100/100 during static source analysis. In rendered mode, the computed CSS tree is captured and correctly flagged as a failure.
 
@@ -355,7 +368,7 @@ cd your-project
 handmade init                 # detects the editor; or --editor vscode|cursor|claude|all
 ```
 
-`init` writes the server entry (`.vscode/mcp.json`, `.cursor/mcp.json` or `.mcp.json`) and keeps any existing servers. For VS Code it also sets `chat.mcp.autostart`, so the server starts when a chat needs it. It writes no instruction files. If an agent later calls `handmade_check` without first requesting a brief, the check fails and handmade adds its instructions to that editor's rules file, so the next request starts with a brief.
+`init` writes the server entry (`.vscode/mcp.json`, `.cursor/mcp.json` or `.mcp.json`) and keeps any existing servers. For VS Code it also sets `chat.mcp.autostart`, so the server starts when a chat needs it. It writes no instruction files. If an agent later calls `handmade_check` without first requesting a brief, the check fails. When that editor is already set up in the project, handmade also adds its instructions to its rules file (`CLAUDE.md`, `.cursor/rules/handmade.mdc` or `.github/copilot-instructions.md`), so the next request starts with a brief. It never creates those folders on a guess.
 
 Manual registration:
 
@@ -380,7 +393,7 @@ Detailed configurations for all major IDEs are available in [`integrations/mcp-c
 **Exposed MCP tools:**
 
 - `handmade_design_brief`
-- `handmade_check`
+- `handmade_check` (takes `pages` to check several routes of a running app in one call)
 - `handmade_scan`
 - `handmade_fix_plan`
 - `handmade_list_tells`
@@ -429,14 +442,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Audit design tokens and anti-patterns
-        uses: h-hiram/handmade@v0.3.0
+        uses: h-hiram/handmade@v0
         with:
           path: src
           enforce: "true"
 ```
+
+`v0` always points at the latest 0.x release. Pin an exact tag such as `h-hiram/handmade@v0.3.2` if you prefer.
 
 Violations are annotated directly on the pull request diff. Jobs terminate with non-zero exit codes upon failure. Set `enforce: "false"` for non-blocking diagnostic reporting.
 
@@ -484,7 +499,7 @@ Run `handmade tells` to review the exhaustive heuristic directory. Individual ch
 
 ## 11. Empirical Verification & Benchmarks
 
-The testing suite contains 130 test cases covering parser accuracy, token synthesis, and heuristic detection. Full diagnostic logs are indexed in [`docs/test-report.md`](docs/test-report.md).
+The test suite covers parser accuracy, token synthesis, heuristic detection, the MCP server, rendered mode and release metadata. Run `python -m unittest discover -s tests` for the current count. The 0.3.0 benchmark results are in [`docs/test-report.md`](docs/test-report.md).
 
 | Evaluated System / Codebase | Verification Score |
 | --- | --- |
@@ -508,7 +523,7 @@ Independent validation can be executed across arbitrary third-party models using
 ## 12. Operational Boundaries & Scope
 
 - **Structural vs. Aesthetic Quality:** Verification proves the absence of common model signatures and enforces strict token adherence; it cannot assess higher-level artistic direction.
-- **Static vs. Runtime Coverage:** Static source auditing cannot evaluate styles computed dynamically at runtime. Dynamic inspection requires `--render`.
+- **Static vs. Runtime Coverage:** Static source auditing cannot evaluate styles computed dynamically at runtime. Dynamic inspection requires `--render`, and a rendered check only covers the pages you list with `--page`.
 - **Raster Inspection:** The engine does not perform computer vision auditing on embedded bitmap or vector assets.
 - **Agent Compliance:** Downstream language models may occasionally disregard prompt system instructions. The CLI assertion (`check`) serves as the definitive gate.
 

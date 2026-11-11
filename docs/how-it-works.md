@@ -103,7 +103,7 @@ Combines the score and the whitelist into one PASS or FAIL. Twelve signature tel
 
 ### Rendered mode: `render.py`
 
-Opens the page in headless Chrome at desktop and phone width and reads the computed styles of every element. It sees styles that JavaScript or a framework adds at runtime. It measures real contrast against the real background and finds fonts that failed to load by measuring text width.
+Opens the page in headless Chrome at desktop and phone width and reads the computed styles of every element. It sees styles that JavaScript or a framework adds at runtime. It measures real contrast against the real background and finds fonts that failed to load by measuring text width. With `--page`, every route of an app opens in the same browser session and the findings and the whitelist tally merge into one result, so one PASS covers the whole app.
 
 ### AI tools: `mcp.py`
 

@@ -9,6 +9,9 @@ This is what comes next. Open an issue if you think something is missing or in t
 - [x] The MCP server hands its questions to your AI tool, which asks you in its own words.
 - [x] A craft standard: states, real controls, chart colors, soft status colors, one depth rule per mood.
 - [x] Rebuilt pilot dashboard and form to that standard.
+- [x] `handmade init` connects the MCP server to VS Code, Cursor or Claude Code in one step. (0.3.1)
+- [x] Listed in the official MCP Registry as `io.github.h-hiram/handmade`. (0.3.1)
+- [x] Rendered checks cover several pages of a running app in one run, with `--page`. (0.3.2)
 
 ## Next: 0.4
 
@@ -16,12 +19,11 @@ This is what comes next. Open an issue if you think something is missing or in t
 - [ ] **More moods.** For example "industrial" and "children".
 - [ ] **Dark theme screenshots** in the docs and examples.
 - [ ] **Swahili and French question sets** for the brief.
-- [ ] **A `handmade init` command** that writes the design system into CSS variables or a Tailwind theme for you.
+- [ ] **A `handmade export` command** that writes the design system into CSS variables or a Tailwind theme for you.
 
 ## Later
 
 - [ ] VS Code extension that underlines tells and copies the fix prompt.
-- [ ] A listing in the official MCP registry.
 - [ ] A Claude Code plugin that installs the skill and the MCP server together.
 - [ ] Figma tokens export from the design system.
 

@@ -112,27 +112,57 @@ def target_url(path: str | Path) -> str:
     return p.as_uri()
 
 
-def collect(path: str | Path) -> dict[str, dict]:
-    # Load the page at each viewport and return the raw computed-style data.
+def page_urls(path: str | Path, pages: list[str] | None = None) -> list[str]:
+    # The base page plus every extra page, as full URLs. A page can be a route ("/pricing") or a full URL.
+    from urllib.parse import urljoin
+    base = target_url(path)
+    urls = [base]
+    for page in pages or []:
+        page = str(page).strip()
+        if not page:
+            continue
+        url = page if re.match(r"^(?:https?|file)://", page) else urljoin(base, page)
+        if url not in urls:
+            urls.append(url)
+    return urls
+
+
+def collect_many(urls: list[str]) -> list[dict]:
+    # Load every page at each viewport in one browser and return the raw computed-style data per page.
     try:
         from playwright.sync_api import sync_playwright
     except ImportError as exc:
         raise RuntimeError("Rendered mode needs Playwright: pip install playwright") from exc
-    url = target_url(path)
-    data = {}
+    out = []
     with sync_playwright() as pw:
         browser = _browser(pw)
         try:
-            for name, (w, h) in VIEWPORTS.items():
-                page = browser.new_page(viewport={"width": w, "height": h})
-                page.goto(url, wait_until="load", timeout=30000)
-                page.wait_for_timeout(400)
-                data[name] = page.evaluate(COLLECT_JS)
-                page.close()
+            for url in urls:
+                data: dict = {}
+                for name, (w, h) in VIEWPORTS.items():
+                    page = browser.new_page(viewport={"width": w, "height": h})
+                    try:
+                        page.goto(url, wait_until="load", timeout=30000)
+                    except Exception as exc:  # a route that does not answer must not hide the others
+                        raise RuntimeError(f"could not open {url}: {str(exc).splitlines()[0]}") from exc
+                    page.wait_for_timeout(400)
+                    data[name] = page.evaluate(COLLECT_JS)
+                    page.close()
+                data["url"] = url
+                out.append(data)
         finally:
             browser.close()
-    data["url"] = url  # type: ignore[assignment]
-    return data
+    return out
+
+
+def collect(path: str | Path) -> dict[str, dict]:
+    # Load one page at each viewport and return the raw computed-style data.
+    return collect_many([target_url(path)])[0]
+
+
+def _as_pages(data) -> list[dict]:
+    # Accept one page's data or a list of pages.
+    return list(data) if isinstance(data, list) else [data]
 
 
 # ---------- analysis ----------
@@ -281,20 +311,32 @@ def analyze(data: dict, allow_stock: bool = False) -> list[Finding]:
     return findings
 
 
-def render_scan(path: str | Path, ignore: set[str] | None = None, data: dict | None = None,
-                allow_stock: bool = False) -> Report:
-    data = data or collect(path)
+def render_scan(path: str | Path, ignore: set[str] | None = None, data: dict | list[dict] | None = None,
+                allow_stock: bool = False, pages: list[str] | None = None) -> Report:
+    # Scan one page, or the base page plus every page in `pages`. Findings name the page they were seen on.
+    pages_data = _as_pages(data) if data else collect_many(page_urls(path, pages))
     ignore = ignore or set()
     cats = {t.id: t.category for t in REGISTRY}
-    findings = [f for f in analyze(data, allow_stock) if f.tell not in ignore and cats.get(f.tell) not in ignore]
-    return Report(root=data["url"], profile=Profile(), findings=findings, files=[data["url"]])
+    findings = []
+    for page_data in pages_data:
+        findings += [f for f in analyze(page_data, allow_stock) if f.tell not in ignore and cats.get(f.tell) not in ignore]
+    urls = [d["url"] for d in pages_data]
+    return Report(root=urls[0], profile=Profile(), findings=findings, files=urls)
 
 
-def render_conformance(path: str | Path, system: dict, data: dict | None = None) -> Conformance:
+def render_conformance(path: str | Path, system: dict, data: dict | list[dict] | None = None,
+                       pages: list[str] | None = None) -> Conformance:
     # Whitelist check on computed styles: fonts, colors, font sizes, radii and padding or gaps.
-    data = data or collect(path)
+    # Every page shares one tally, so one off-system value on any page is reported once.
+    pages_data = _as_pages(data) if data else collect_many(page_urls(path, pages))
     conf = Conformance(system=system)
     col = _Collector(conf)
+    for page_data in pages_data:
+        _conform_page(page_data, system, col)
+    return conf
+
+
+def _conform_page(data: dict, system: dict, col: _Collector) -> None:
     url = data["url"]
     fonts_ok = {norm_font(f) for f in system["fonts"].values()} | GENERIC_FAMILIES
     colors_ok = [c.lower() for c in system["colors"].values()]
@@ -344,7 +386,6 @@ def render_conformance(path: str | Path, system: dict, data: dict | None = None)
                     col.seen("spacing")
                     if not near(v, space_ok):
                         col.off("spacing", f"{v:g}px", where, 0)
-    return conf
 
 
 def dump(path: str | Path) -> str:

@@ -614,13 +614,18 @@ def _images_section(brief: "Brief", intent: str) -> list[str]:
     return lines
 
 
-def build_fix_prompt(report: Report, brief: Brief | None = None, variant: int = 0) -> tuple[str, DesignSystem]:
+def build_fix_prompt(report: Report, brief: Brief | None = None, variant: int = 0,
+                     saved_system: dict | None = None) -> tuple[str, DesignSystem]:
     # A prompt that tells an AI to repair the exact tells found in a project.
+    # A saved handmade.system.json is reused as it is, so the fix keeps the screens that already pass.
     brief = brief or Brief(request="")
     intent = brief.intent or detect_intent(brief.request + " " + " ".join(report.files), brief.product)
-    mood = brief.mood if brief.mood in MOODS else guess_mood(" ".join([brief.request, brief.product, brief.audience]), intent)
-    seed = seed_from(report.root, brief.product, mood, str(variant))
-    system = build_system(mood, seed, profile=report.profile, dense=intent == "dashboard")
+    if saved_system:
+        system = DesignSystem.from_dict(saved_system)
+    else:
+        mood = brief.mood if brief.mood in MOODS else guess_mood(" ".join([brief.request, brief.product, brief.audience]), intent)
+        seed = seed_from(report.root, brief.product, mood, str(variant))
+        system = build_system(mood, seed, profile=report.profile, dense=intent == "dashboard")
     tells = by_id()
 
     lines = [

@@ -2,11 +2,13 @@ name: tests
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       matrix:
         python-version: ["3.10", "3.12", "3.13"]
@@ -17,17 +19,25 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e .
       - run: python -m unittest discover -s tests -v
-      - name: The example must pass the gate
+      - name: The examples must pass the gate
         run: |
           handmade scan tests/fixtures/clean --fail-under 100
           handmade check examples/landing/after.html
+          handmade check examples/saas/after.html
 
   render:
+    # Rendered mode in a real browser. GitHub's runners ship Google Chrome, so nothing is downloaded
+    # through apt, which has been slow or unreachable from the runners.
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - run: pip install -e ".[render]" && playwright install --with-deps chromium
+      - run: pip install -e ".[render]"
+      - name: The runner's Chrome must open a page, or this job fails instead of skipping
+        run: |
+          google-chrome --version
+          python -c "from handmade.render import collect; collect('tests/fixtures/runtime'); print('browser ok')"
       - run: python -m unittest tests.test_render -v

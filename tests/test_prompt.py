@@ -286,3 +286,44 @@ class CraftTokenTests(unittest.TestCase):
         self.assertIn("segmented date range", text)
         self.assertIn("Depth (borders)", text)
         self.assertIn(system.colors["chart-3"], text)
+
+
+class SavedSystemTests(unittest.TestCase):
+    # A saved handmade.system.json is the project's contract. Later commands keep it.
+    def test_fix_prompt_reuses_the_saved_system(self):
+        import json
+        from pathlib import Path
+        from handmade.prompt import build_fix_prompt
+        from handmade.scan import scan
+        root = Path(__file__).resolve().parents[1]
+        saved = json.loads((root / "examples" / "landing" / "handmade.system.json").read_text(encoding="utf-8"))
+        report = scan(root / "tests" / "fixtures" / "slop")
+        _text, system = build_fix_prompt(report, saved_system=saved)
+        self.assertEqual(system.colors["accent"], saved["colors"]["accent"])
+        self.assertEqual(system.display_font, saved["fonts"]["display"])
+        _text, fresh = build_fix_prompt(report)
+        self.assertNotEqual(fresh.colors["accent"], saved["colors"]["accent"])
+
+    def test_mood_flag_against_a_saved_system_is_explained(self):
+        import contextlib
+        import io
+        import os
+        import shutil
+        import tempfile
+        from pathlib import Path
+        from handmade.cli import main
+        root = Path(__file__).resolve().parents[1]
+        folder = Path(tempfile.mkdtemp())
+        shutil.copy(root / "examples" / "landing" / "handmade.system.json", folder / "handmade.system.json")
+        old = os.getcwd()
+        os.chdir(folder)
+        err, out = io.StringIO(), io.StringIO()
+        try:
+            with contextlib.redirect_stderr(err), contextlib.redirect_stdout(out):
+                main(["prompt", "menu page for my bakery", "--mood", "luxury", "--no-input"])
+        finally:
+            os.chdir(old)
+        self.assertIn("saved design system uses the warm mood", err.getvalue())
+        self.assertIn("--fresh", err.getvalue())
+        self.assertIn("Mood: **warm**", out.getvalue())
+

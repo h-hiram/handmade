@@ -2,8 +2,41 @@
 
 ## Unreleased
 
-- Every MCP tool now has a title and annotations that say whether it only reads or can write files.
+## 0.3.2
+
+Bug fixes for 0.3.1. Nothing new to learn, except `--page`.
+
+**Fixed**
+
+- A rendered check of a URL (`handmade check --render http://...`) never loaded the design system, then printed PASS and said everything came from it. It now reads `handmade.system.json` from the folder you run it in, or from `--system`. When no system is checked, the summary says so.
+- Words and hex-looking fragments inside `url()` and quoted strings were read as colors. `url(black-logo.png)` added black twice and `url(sprite.svg#bad)` counted as purple, so a passing page failed the check. A font called "Plum" or `transition: color` no longer count either.
+- `--mood` was ignored without a word when a saved `handmade.system.json` existed. The saved mood still wins, so every screen matches, but the command now says so and names `--fresh`.
+- `handmade check` printed a Python traceback for a missing or broken system file. It now prints one line and exits with 2.
+- `handmade fix` and the `handmade_fix_plan` tool generated a new design system even when the project had one saved. They now reuse the saved one, so screens that already pass keep passing.
+- The request reader took "tracking sales" as the product in "a dashboard for tracking sales", and "photographer based" in "a photographer based in Mombasa". Tasks after "for" are skipped and "based in" belongs to the place.
+- `handmade scan --format json` printed nothing when no UI files were found. It now prints the empty report and still exits with 2.
+- A page built exactly to a generated brief could fail its own gate: the system's pale `warning-soft` background and rust `accent-2` tripped the "cream and terracotta" signature tell. Cream now has to be a real share of the page's backgrounds and terracotta the main accent.
+
+**Check several pages at once**
+
+- `handmade check --render http://localhost:3000 --page /pricing --page /signup` opens every page in one browser session. One PASS covers them all and each finding names its page. The same for `handmade scan --render`.
+- The MCP tool `handmade_check` takes `pages` for the same thing, and tells the agent to pass `system_path` for a URL.
+
+**MCP**
+
+- `handmade_check` wrote instruction files into any project without a design system, even a folder with no UI files, and created `.github/` when it could not tell which editor was in use. It now writes only for an editor that is already set up in the project, never on a guess, and a folder without UI files gets "No UI files found" instead.
+- Every tool has a title and annotations that say whether it only reads or can write files.
 - The last two tool parameters without descriptions (`format` and `min_score`) now have them. A test keeps every parameter described.
+- `prompts/list` and `resources/list` answer with empty lists instead of "method not found", which some clients logged as an error.
+
+**Release**
+
+- `python scripts/bump_version.py X.Y.Z` sets the version in `pyproject.toml`, `__init__.py`, `server.json` and the changelog in one step. A test fails when they disagree.
+- The release workflow refuses a tag that does not match `pyproject.toml`, and moves the `v0` tag after each release, so a workflow can pin `h-hiram/handmade@v0`.
+
+**Docs**
+
+- Version numbers, test counts, the CI example and the claims about what handmade writes to disk were out of date and are now correct. SECURITY.md lists every file handmade can write.
 
 ## 0.3.1
 

@@ -85,7 +85,7 @@ If you use [uv](https://docs.astral.sh/uv/), any client can run it straight from
 | Tool | What it does |
 |---|---|
 | `handmade_design_brief` | Turns a UI request into a design system and rules to follow before coding. Screens styling words in the request and can save `handmade.system.json` |
-| `handmade_check` | The finish gate. PASS or FAIL against AI defaults and the saved design system. The server tells the AI it is not done until PASS |
+| `handmade_check` | The finish gate. PASS or FAIL against AI defaults and the saved design system. The server tells the AI it is not done until PASS. With `render: true` it takes a URL, `pages` for the app's other routes and `system_path` for the design system |
 | `handmade_scan` | Scores a folder and lists every tell with file, line and fix |
 | `handmade_fix_plan` | Builds a repair plan for an existing UI from its own tokens |
 | `handmade_list_tells` | Lists all tells with reasons and fixes |

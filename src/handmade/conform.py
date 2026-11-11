@@ -19,6 +19,9 @@ from .profile import GENERIC_FAMILIES, NEUTRALS as NEUTRAL_FAMILIES, Profile, ba
 SYSTEM_FILE = "handmade.system.json"
 COLOR_TOLERANCE = 0.025  # OKLab distance; about the smallest step people notice
 ALWAYS_OK_COLORS = ("transparent", "currentcolor", "inherit", "initial", "unset", "none")
+# Properties whose words are never colors: a font called "Plum" or a transition on "color".
+NEVER_COLOR_PROPS = {"font-family", "font", "content", "transition", "transition-property", "animation",
+                     "animation-name", "will-change", "grid-template-areas", "grid-area", "cursor", "quotes"}
 PASS_THRESHOLDS = {"fonts": 100, "colors": 95, "font sizes": 90, "radii": 90, "spacing": 85}
 
 TW_SIZES = {"xs": 12, "sm": 14, "base": 16, "lg": 18, "xl": 20, "2xl": 24, "3xl": 30, "4xl": 36,
@@ -157,7 +160,7 @@ def check_conformance(docs: list[Doc], profile: Profile, system: dict) -> Confor
         # CSS declarations, after resolving var()
         for line, prop, val in doc.decls:
             low = val.strip().lower()
-            if low in ALWAYS_OK_COLORS:
+            if low in ALWAYS_OK_COLORS or prop in NEVER_COLOR_PROPS:
                 continue
             if prop.startswith("--") and not re.search(r"color|bg|background|paper|ink|accent|primary|brand|surface|line|border|text|fg", prop):
                 pass  # non-color variables are checked where they are used

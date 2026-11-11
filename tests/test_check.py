@@ -103,6 +103,103 @@ class GateTests(unittest.TestCase):
         self.assertEqual(data, saved)
 
 
+class BuiltFromTheBriefTests(unittest.TestCase):
+    # A page built exactly to a generated brief must pass. In 0.3.1 the system's own warning-soft and
+    # accent-2 colors tripped the cream-and-terracotta signature tell.
+    SAAS = ROOT / "examples" / "saas"
+
+    def test_saas_example_passes(self):
+        result = run_check(self.SAAS / "after.html")
+        self.assertTrue(result.passed, result.text())
+        self.assertNotIn("color.tasteful-default", {f.tell for f in result.report.findings})
+
+    def test_saas_ai_page_fails(self):
+        result = run_check(self.SAAS / "before.html")
+        self.assertFalse(result.passed)
+        self.assertLess(result.report.score, 40)
+
+    def test_a_pale_notice_and_a_rust_second_accent_are_not_the_cream_palette(self):
+        from handmade.scan import scan
+        folder = Path(tempfile.mkdtemp())
+        (folder / "a.css").write_text(
+            ":root{--paper:#f6f7f8;--surface:#ebedf0;--accent:#2c6faa;--accent-2:#ad573e;--warning-soft:#fbf4e9}"
+            "body{background:var(--paper)} .panel{background:var(--surface)} .card{background:#fefefe}"
+            ".notice{background:var(--warning-soft)} .link{color:var(--accent-2)}", encoding="utf-8")
+        self.assertNotIn("color.tasteful-default", {f.tell for f in scan(folder).findings})
+
+
+class NotAColorTests(unittest.TestCase):
+    # Words and hex-looking fragments inside url() and quotes are not colors (a 0.3.1 false FAIL).
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp())
+        shutil.copy(EXAMPLE / "after.html", self.dir / "index.html")
+        shutil.copy(EXAMPLE / "handmade.system.json", self.dir / "handmade.system.json")
+
+    def offenders(self, css: str) -> list[str]:
+        (self.dir / "extra.css").write_text(css, encoding="utf-8")
+        result = run_check(self.dir)
+        return [o.value for o in result.conformance.offenders if o.category == "colors"]
+
+    def test_named_color_inside_url_is_ignored(self):
+        self.assertEqual(self.offenders(".logo { background-image: url(/img/black-logo.png); }"), [])
+
+    def test_hex_looking_fragment_inside_url_is_ignored(self):
+        self.assertEqual(self.offenders(".icon { background: url(sprite.svg#bad) no-repeat; mask: url(a.svg#cafe); }"), [])
+
+    def test_words_in_quotes_are_ignored(self):
+        self.assertEqual(self.offenders('.promo::before { content: "Black Friday"; }'), [])
+
+    def test_font_named_like_a_color_is_not_a_color(self):
+        self.assertEqual(self.offenders(".x { font-family: Plum, serif; transition: color 0.2s; }"), [])
+
+    def test_real_colors_next_to_a_url_still_count(self):
+        self.assertEqual(self.offenders(".x { background: #7c3aed url(bg.png); }"), ["#7c3aed"])
+
+
+class UrlAndPagesTests(unittest.TestCase):
+    # A URL has no folder, so the working directory stands in for it. Pages need the browser.
+    def setUp(self):
+        import os
+        self.dir = Path(tempfile.mkdtemp())
+        self.old_cwd = os.getcwd()
+        os.chdir(self.dir)
+
+    def tearDown(self):
+        import os
+        os.chdir(self.old_cwd)
+
+    def test_url_check_finds_the_system_in_the_working_directory(self):
+        from handmade.check import system_for
+        self.assertIsNone(system_for("http://localhost:3000"))
+        shutil.copy(EXAMPLE / "handmade.system.json", self.dir / "handmade.system.json")
+        self.assertEqual(system_for("http://localhost:3000"), self.dir / "handmade.system.json")
+        self.assertEqual(system_for("http://localhost:3000", "x.json"), Path("x.json"))
+
+    def test_pages_need_render(self):
+        with self.assertRaises(ValueError):
+            run_check(EXAMPLE / "after.html", pages=["/pricing"])
+
+    def test_summary_never_claims_a_system_that_was_not_checked(self):
+        shutil.copy(EXAMPLE / "after.html", self.dir / "index.html")
+        text = run_check(self.dir).text()
+        self.assertIn("The design system was not checked", text)
+        self.assertNotIn("everything comes from the design system", text)
+
+    def test_bad_system_file_is_an_error_not_a_crash(self):
+        shutil.copy(EXAMPLE / "after.html", self.dir / "index.html")
+        (self.dir / "handmade.system.json").write_text('{"not": "a system"}', encoding="utf-8")
+        with self.assertRaises(ValueError):
+            run_check(self.dir)
+        from handmade.cli import main
+        import contextlib, io
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.assertEqual(main(["check", str(self.dir)]), 2)
+            self.assertEqual(main(["check", str(self.dir), "--system", "nope.json"]), 2)
+        self.assertIn("not a handmade design system", err.getvalue())
+        self.assertIn("not found", err.getvalue())
+
+
 class StockPhotoPermissionTests(unittest.TestCase):
     def project(self, alt: str, photos: str | None) -> Path:
         import tempfile

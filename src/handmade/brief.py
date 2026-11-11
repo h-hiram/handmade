@@ -118,7 +118,11 @@ def detect_domain(text: str) -> Domain:
 PLACE = re.compile(r"\b(?:in|at|near|around|based in|from)\s+((?:[A-Z][\w'’-]+)(?:\s+(?:[A-Z][\w'’-]+|Town|City))*)")
 PRODUCT = re.compile(
     r"\bfor\s+(?:(?:a|an|my|our|the|this)\s+)?((?:[a-z][\w'’-]*\s+){0,5}?[a-z][\w'’-]*)"
-    r"(?=\s+(?:in|at|near|that|which|who|with|where|so|for|to|and)\b|[,.;:!?]|$)", re.I)
+    r"(?=\s+(?:in|at|near|that|which|who|with|where|so|for|to|and|based|located|serving|run|operating)\b|[,.;:!?]|$)", re.I)
+# "a dashboard for tracking sales": what follows "for" is a task, not the product.
+TASK_WORDS = {"tracking", "managing", "booking", "ordering", "selling", "monitoring", "running", "checking",
+              "recording", "sending", "paying", "learning", "finding", "hiring", "renting", "comparing", "viewing",
+              "browsing", "buying", "signing", "logging", "collecting", "reporting", "scheduling", "planning"}
 
 
 def extract(request: str) -> dict[str, str]:
@@ -127,7 +131,8 @@ def extract(request: str) -> dict[str, str]:
     m = PRODUCT.search(request)
     if m:
         product = m.group(1).strip()
-        if product.lower() not in ("me", "us", "it", "them", "this", "that"):
+        first = product.split()[0].lower()
+        if product.lower() not in ("me", "us", "it", "them", "this", "that") and first not in TASK_WORDS:
             facts["product"] = product
     m = PLACE.search(request)
     if m:

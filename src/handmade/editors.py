@@ -62,7 +62,8 @@ def project_root(path: str | Path) -> Path:
     return folder
 
 
-def detect(root: Path) -> list[str]:
+def detect(root: Path, default: bool = True) -> list[str]:
+    # Editors with a footprint in the project. With default=True, an empty result becomes VS Code.
     found = []
     if (root / ".vscode").is_dir() or (root / ".github").is_dir():
         found.append("vscode")
@@ -70,7 +71,7 @@ def detect(root: Path) -> list[str]:
         found.append("cursor")
     if (root / ".claude").is_dir() or (root / "CLAUDE.md").is_file() or (root / ".mcp.json").is_file():
         found.append("claude")
-    return found or ["vscode"]
+    return found or (["vscode"] if default else [])
 
 
 def _read_json(path: Path) -> dict | None:
@@ -129,10 +130,11 @@ def init(path: str | Path = ".", editors: list[str] | None = None) -> list[str]:
 
 def write_instructions(path: str | Path) -> list[Path]:
     # Called when an AI checked UI without a brief: tell that editor's AI to use handmade from now on.
+    # Only editors that already have a footprint in the project get a file. Nothing is created on a guess.
     root = project_root(path)
     written = []
     targets = []
-    for editor in detect(root):
+    for editor in detect(root, default=False):
         if editor == "vscode":
             targets.append((root / ".github" / "copilot-instructions.md", INSTRUCTIONS))
         elif editor == "cursor":

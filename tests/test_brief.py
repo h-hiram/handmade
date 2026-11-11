@@ -27,6 +27,15 @@ class ExtractTests(unittest.TestCase):
         facts = extract("a dashboard for African fintechs, please")
         self.assertEqual(facts.get("product"), "African fintechs")
 
+    def test_a_task_after_for_is_not_a_product(self):
+        self.assertNotIn("product", extract("build a dashboard for tracking sales for my shop"))
+        self.assertNotIn("product", extract("a page for booking appointments"))
+
+    def test_based_in_does_not_leak_into_the_product(self):
+        facts = extract("portfolio site for a photographer based in Mombasa")
+        self.assertEqual(facts.get("product"), "photographer")
+        self.assertEqual(facts.get("place"), "Mombasa")
+
 
 class DomainTests(unittest.TestCase):
     def test_known_domains(self):

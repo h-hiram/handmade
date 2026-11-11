@@ -23,6 +23,38 @@ def _browser_available() -> bool:
 AVAILABLE = _browser_available()
 
 
+class PageListTests(unittest.TestCase):
+    # No browser needed: the list of pages to open, and how several pages merge into one result.
+    def test_routes_and_urls_resolve_against_the_base(self):
+        from handmade.render import page_urls
+        urls = page_urls("http://localhost:3000", ["/pricing", "signup", "https://other.test/x", "/pricing", " "])
+        self.assertEqual(urls, ["http://localhost:3000", "http://localhost:3000/pricing",
+                                "http://localhost:3000/signup", "https://other.test/x"])
+
+    def fake(self, url: str, font: str) -> dict:
+        el = {"sel": "p", "tag": "p", "text": "hello world", "role": "", "href": False, "alt": False, "src": "",
+              "altText": "", "x": 0, "y": 0, "w": 100, "h": 20, "font": font, "fontOk": True, "fontSize": "16px",
+              "fontWeight": "400", "color": "rgb(36, 20, 30)", "bg": "rgba(0, 0, 0, 0)", "bgImage": "none",
+              "effBg": "rgb(248, 246, 248)", "clip": "", "fill": "", "shadow": "none", "textShadow": "none",
+              "filter": "none", "backdrop": "none", "radius": ["0px"] * 4, "border": "0px rgb(0, 0, 0)",
+              "padding": ["0px"] * 4, "gap": "normal normal", "align": "start", "parent": "body",
+              "parentIndex": 0, "siblings": 1}
+        vp = {"title": "t", "text": "hello world", "vw": 1440, "els": [el]}
+        return {"url": url, "desktop": vp, "phone": vp}
+
+    def test_findings_and_conformance_merge_across_pages(self):
+        from handmade.conform import load_system
+        from handmade.render import render_conformance, render_scan
+        pages = [self.fake("http://app/", "Alegreya Sans"), self.fake("http://app/pricing", "Inter")]
+        report = render_scan("", data=pages)
+        self.assertEqual(report.files, ["http://app/", "http://app/pricing"])
+        self.assertEqual({f.file for f in report.findings if f.tell == "type.generic-font"}, {"http://app/pricing"})
+        conf = render_conformance("", load_system(EXAMPLE / "handmade.system.json"), data=pages)
+        self.assertFalse(conf.passed)
+        self.assertEqual([o.value for o in conf.hard_offenders], ["inter"])
+        self.assertIn("http://app/pricing", conf.hard_offenders[0].file)
+
+
 @unittest.skipUnless(AVAILABLE, "Playwright with Chrome or Chromium is not available")
 class RenderTests(unittest.TestCase):
     @classmethod
@@ -57,6 +89,16 @@ class RenderTests(unittest.TestCase):
     def test_redesigned_page_is_clean(self):
         # Fonts come from Google Fonts; a sandbox without network cannot load them.
         self.assertEqual(self.tells(self.after, ignore=("type.font-not-loaded",)), set())
+
+    def test_several_pages_in_one_browser_session(self):
+        from handmade.check import run_check
+        result = run_check(EXAMPLE / "after.html", system_path=EXAMPLE / "handmade.system.json", render=True,
+                           pages=["before.html"], ignore={"type.font-not-loaded"})
+        self.assertEqual(len(result.pages), 2)
+        self.assertFalse(result.passed)  # the AI page is one of the two, so the whole app fails
+        self.assertIn("Checked 2 pages", result.text())
+        self.assertTrue(any(f.file.endswith("before.html") for f in result.report.findings))
+        self.assertFalse(any(f.file.endswith("after.html") for f in result.report.findings))
 
     def test_rendered_conformance(self):
         from handmade.conform import load_system

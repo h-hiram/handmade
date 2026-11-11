@@ -113,9 +113,19 @@ def parse_color(value: str) -> str | None:
     return None
 
 
+# Parts of a value that can look like a color but never are: url(sprite.svg#bad), "Black Friday".
+NOT_A_COLOR = re.compile(r"""url\([^)]*\)|"[^"]*"|'[^']*'""", re.I)
+
+
+def without_strings(text: str) -> str:
+    # Blank out url() arguments and quoted strings, keeping the length so offsets still match.
+    return NOT_A_COLOR.sub(lambda m: " " * len(m.group(0)), text)
+
+
 def colors_in(text: str) -> list[str]:
-    # Every color literal in a CSS value, as hex.
+    # Every color literal in a CSS value, as hex. Text inside url() and quotes is skipped.
     out = []
+    text = without_strings(text)
     for m in COLOR_IN_TEXT.finditer(text):
         c = parse_color(m.group(0))
         if c:

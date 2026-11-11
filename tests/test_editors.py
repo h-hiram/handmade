@@ -78,6 +78,27 @@ class FallbackTests(unittest.TestCase):
         self.assertIn("handmade_design_brief", text)
         self.assertTrue((root / ".github" / "copilot-instructions.md").is_file())
 
+    def test_nothing_is_written_when_no_editor_is_present(self):
+        root = project()
+        (root / "index.html").write_text("<h1>Fades and line-ups</h1>", encoding="utf-8")
+        text = call_tool("handmade_check", {"path": str(root)})
+        self.assertTrue(text.startswith("handmade check: FAIL"))
+        self.assertNotIn("added its instructions", text)
+        self.assertEqual(sorted(p.name for p in root.iterdir()), ["index.html"])
+
+    def test_a_folder_without_ui_files_is_not_a_skipped_brief(self):
+        root = project(".vscode")
+        (root / "notes.md").write_text("# notes\n", encoding="utf-8")
+        text = call_tool("handmade_check", {"path": str(root)})
+        self.assertTrue(text.startswith("No UI files found"))
+        self.assertFalse((root / ".github").exists())
+
+    def test_a_url_without_a_system_asks_for_system_path(self):
+        from handmade.mcp import _brief_skipped
+        text = _brief_skipped("http://localhost:3000", is_url=True)
+        self.assertIn("system_path", text)
+        self.assertNotIn("added its instructions", text)
+
 
 if __name__ == "__main__":
     unittest.main()

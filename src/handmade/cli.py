@@ -83,13 +83,26 @@ def _ignore(args) -> set[str]:
     return {x.strip() for x in (args.ignore or "").split(",") if x.strip()}
 
 
+def _pages(args) -> list[str]:
+    return [p for p in (getattr(args, "page", None) or []) if p.strip()]
+
+
 def cmd_scan(args) -> int:
-    if getattr(args, "render", False):
-        from .render import render_scan
-        report = render_scan(args.path, ignore=_ignore(args))
-    else:
-        report = scan(args.path, ignore=_ignore(args))
+    if _pages(args) and not args.render:
+        print("handmade scan: --page needs --render, extra pages are opened in the browser.", file=sys.stderr)
+        return 2
+    try:
+        if args.render:
+            from .render import render_scan
+            report = render_scan(args.path, ignore=_ignore(args), pages=_pages(args))
+        else:
+            report = scan(args.path, ignore=_ignore(args))
+    except (RuntimeError, ValueError) as exc:  # no browser, or a page that did not open
+        print(f"handmade scan: {exc}", file=sys.stderr)
+        return 2
     if not report.files:
+        if args.format == "json":
+            print(json.dumps(report.to_dict(), indent=2))
         print(f"No UI files found in {args.path}.", file=sys.stderr)
         return 2
     if args.format == "json":
@@ -146,6 +159,10 @@ def _gather(args, request: str, interactive: bool, start: str | None = None) -> 
         facts.values["mood"] = args.mood.lower()
         facts.source["mood"] = "flag"
     if saved:
+        asked = getattr(args, "mood", None)
+        if asked and asked.lower() != saved["mood"]:
+            print(f"Note: the saved design system uses the {saved['mood']} mood. Keeping it so every screen matches. "
+                  f"Add --fresh to start over with {asked.lower()}.", file=sys.stderr)
         facts.values["mood"] = saved["mood"]
         facts.source["mood"] = "saved system"
 
@@ -213,8 +230,8 @@ def cmd_fix(args) -> int:
     if not report.files:
         print(f"No UI files found in {args.path}.", file=sys.stderr)
         return 2
-    brief, facts, _saved_system = _gather(args, "", interactive=not args.no_input and sys.stdin.isatty(), start=args.path)
-    text, system = build_fix_prompt(report, brief, variant=args.variant)
+    brief, facts, saved = _gather(args, "", interactive=not args.no_input and sys.stdin.isatty(), start=args.path)
+    text, system = build_fix_prompt(report, brief, variant=args.variant, saved_system=saved)
     _emit(text, args.out)
     _save_system(system, args.save_system, facts)
     return 0
@@ -222,8 +239,15 @@ def cmd_fix(args) -> int:
 
 def cmd_check(args) -> int:
     from .check import run_check
-    result = run_check(args.path, system_path=args.system, min_score=args.min_score, ignore=_ignore(args),
-                       render=args.render)
+    try:
+        result = run_check(args.path, system_path=args.system, min_score=args.min_score, ignore=_ignore(args),
+                           render=args.render, pages=_pages(args))
+    except FileNotFoundError as exc:
+        print(f"handmade check: design system file not found: {exc.filename or exc}", file=sys.stderr)
+        return 2
+    except (RuntimeError, ValueError, OSError) as exc:  # bad system file, no browser, bad arguments
+        print(f"handmade check: {exc}", file=sys.stderr)
+        return 2
     if not result.report.files and not args.render:
         print(f"No UI files found in {args.path}.", file=sys.stderr)
         return 2
@@ -326,6 +350,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("-v", "--verbose", action="store_true", help="show every location")
     p.add_argument("--render", action="store_true",
                    help="check the rendered page in headless Chrome (path to .html, a folder or a URL)")
+    p.add_argument("--page", action="append", default=[], metavar="PATH_OR_URL",
+                   help="with --render: another page to open, such as /pricing (repeatable)")
     p.set_defaults(func=cmd_scan)
 
     p = sub.add_parser("prompt", help="rewrite a UI request into a designer-grade prompt")
@@ -346,6 +372,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--min-score", type=int, default=85, help="minimum AI-default score to pass (default 85)")
     p.add_argument("--ignore", help="comma-separated tell IDs or categories to skip")
     p.add_argument("--render", action="store_true", help="check the rendered page in headless Chrome")
+    p.add_argument("--page", action="append", default=[], metavar="PATH_OR_URL",
+                   help="with --render: another page of the same app to check, such as /pricing (repeatable)")
     p.add_argument("--format", choices=["text", "json", "github"], default="text")
     p.set_defaults(func=cmd_check)
 
