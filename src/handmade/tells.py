@@ -328,23 +328,32 @@ def _indigo_accent(ctx: Context) -> list[Finding]:
     return out
 
 
+MAIN_ACCENT_VAR = re.compile(r"^--(?:color-)?(?:accent|primary|brand|main|theme)$")
+
+
 @tell("color.tasteful-default", "color", 5, "Cream and terracotta palette",
       "After the purple backlash, models moved to cream backgrounds with a terracotta accent. It is now a default too.",
       "Derive the palette from the product. Try a cool or saturated paper tint or an unexpected accent hue.")
 def _tasteful(ctx: Context) -> list[Finding]:
     # Cream must be a page-level background and terracotta a main accent, not a badge.
+    #
+    # A pale amber notice background (`warning-soft`) or a rust second accent (`accent-2`) is not
+    # this palette. Cream has to be a real share of the backgrounds, and terracotta the main accent.
     p = ctx.profile
-    cream_bg = terra_uses = 0
+    cream_bg = terra_uses = bg_total = cream_css = 0
     chroma: dict[str, int] = {}
     for doc in ctx.docs:
         for _line, prop, val in doc.decls:
             cols = colors_in(p.resolve(val))
             is_bg = prop in ("background", "background-color") or any(k in prop for k in ("bg", "background", "paper", "surface", "canvas"))
-            if is_bg and any(is_cream(c) for c in cols):
-                cream_bg += 3
+            if is_bg and cols:
+                bg_total += 1
+                if any(is_cream(c) for c in cols):
+                    cream_bg += 3
+                    cream_css += 1
             if any(is_terracotta(c) for c in cols):
-                # A terracotta accent or brand token is the palette's main color, so it weighs more.
-                terra_uses += 3 if any(k in prop for k in ("accent", "primary", "brand")) else 1
+                # The main accent or brand token weighs more. A second accent or a plain use counts once.
+                terra_uses += 3 if MAIN_ACCENT_VAR.match(prop) else 1
         for _line, tok in doc.tokens:
             b = base(tok)
             family, hexes = p.token_colors(b)
@@ -360,7 +369,8 @@ def _tasteful(ctx: Context) -> list[Finding]:
                 chroma["orange"] = chroma.get("orange", 0) + 1
     total = sum(chroma.values()) or 1
     warm_share = (chroma.get("orange", 0) + chroma.get("amber", 0)) / total
-    if cream_bg >= 3 and terra_uses >= 3 and (not chroma or warm_share >= 0.3 or terra_uses >= 6):
+    cream_is_the_page = cream_css == 0 or cream_css / bg_total >= 0.3
+    if cream_bg >= 3 and terra_uses >= 3 and cream_is_the_page and (not chroma or warm_share >= 0.3 or terra_uses >= 6):
         return [Finding("color.tasteful-default", "(project)", 0, "cream background with terracotta accent")]
     return []
 

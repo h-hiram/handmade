@@ -103,6 +103,31 @@ class GateTests(unittest.TestCase):
         self.assertEqual(data, saved)
 
 
+class BuiltFromTheBriefTests(unittest.TestCase):
+    # A page built exactly to a generated brief must pass. In 0.3.1 the system's own warning-soft and
+    # accent-2 colors tripped the cream-and-terracotta signature tell.
+    SAAS = ROOT / "examples" / "saas"
+
+    def test_saas_example_passes(self):
+        result = run_check(self.SAAS / "after.html")
+        self.assertTrue(result.passed, result.text())
+        self.assertNotIn("color.tasteful-default", {f.tell for f in result.report.findings})
+
+    def test_saas_ai_page_fails(self):
+        result = run_check(self.SAAS / "before.html")
+        self.assertFalse(result.passed)
+        self.assertLess(result.report.score, 40)
+
+    def test_a_pale_notice_and_a_rust_second_accent_are_not_the_cream_palette(self):
+        from handmade.scan import scan
+        folder = Path(tempfile.mkdtemp())
+        (folder / "a.css").write_text(
+            ":root{--paper:#f6f7f8;--surface:#ebedf0;--accent:#2c6faa;--accent-2:#ad573e;--warning-soft:#fbf4e9}"
+            "body{background:var(--paper)} .panel{background:var(--surface)} .card{background:#fefefe}"
+            ".notice{background:var(--warning-soft)} .link{color:var(--accent-2)}", encoding="utf-8")
+        self.assertNotIn("color.tasteful-default", {f.tell for f in scan(folder).findings})
+
+
 class NotAColorTests(unittest.TestCase):
     # Words and hex-looking fragments inside url() and quotes are not colors (a 0.3.1 false FAIL).
     def setUp(self):

@@ -15,6 +15,7 @@ Bug fixes for 0.3.1. Nothing new to learn, except `--page`.
 - `handmade fix` and the `handmade_fix_plan` tool generated a new design system even when the project had one saved. They now reuse the saved one, so screens that already pass keep passing.
 - The request reader took "tracking sales" as the product in "a dashboard for tracking sales", and "photographer based" in "a photographer based in Mombasa". Tasks after "for" are skipped and "based in" belongs to the place.
 - `handmade scan --format json` printed nothing when no UI files were found. It now prints the empty report and still exits with 2.
+- A page built exactly to a generated brief could fail its own gate: the system's pale `warning-soft` background and rust `accent-2` tripped the "cream and terracotta" signature tell. Cream now has to be a real share of the page's backgrounds and terracotta the main accent.
 
 **Check several pages at once**
 

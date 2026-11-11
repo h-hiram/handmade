@@ -10,7 +10,15 @@
 ![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
-![The same request built twice: a plain AI landing page that fails handmade check with a score of 19, next to the page built through handmade that passes with 100](docs/images/hero.png)
+![One request built twice. Left: the plain AI result, a purple gradient hero with Inter and three feature cards. Right: the result through handmade, a left-aligned headline next to a live week board.](docs/images/hero.png)
+
+One request, `build a landing page for Taskline, a task tracker for small teams`, built twice by the same model. Both pages are in [`examples/saas`](examples/saas).
+
+| | Plain request | Same request through handmade |
+|---|---|---|
+| `handmade check` | **FAIL**, score 15/100 | **PASS**, score 100/100 |
+| What the scanner found | Inter as the only typeface, purple gradient hero, gradient headline text, pill badge above the headline, centered hero with two buttons, three equal feature cards, emoji icons, sparkle motif, blurred blobs, glassmorphism, colored glows, hype copy, invented stats and quotes, `transition: all`, animation without reduced motion | Nothing. Every font, color, size, radius and spacing value comes from the generated `handmade.system.json`, and the rendered page passes too |
+| What it shows | A slogan and three promises | The product itself, with named customers, real prices and marked slots where a fact was not given |
 
 Most generative UI models converge on identical design clichés: ubiquitous Inter typography, indigo primary buttons, purple mesh gradients and uniform three-column card grids.
 
