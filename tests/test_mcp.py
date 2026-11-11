@@ -141,5 +141,15 @@ class McpServerTests(unittest.TestCase):
         self.assertEqual(self.send("tools/call", {"name": "nope", "arguments": {}})["error"]["code"], -32602)
 
 
+class ToolDefinitionTests(unittest.TestCase):
+    # Directories such as Glama rate servers on how well their tools are described.
+    def test_every_tool_is_fully_described(self):
+        from handmade.mcp import TOOLS
+        for tool in TOOLS:
+            self.assertTrue(tool["title"] and tool["annotations"], tool["name"])
+            for key, spec in tool["inputSchema"].get("properties", {}).items():
+                self.assertTrue(spec.get("description"), f"{tool['name']}.{key} has no description")
+
+
 if __name__ == "__main__":
     unittest.main()

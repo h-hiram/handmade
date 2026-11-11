@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Every MCP tool now has a title and annotations that say whether it only reads or can write files.
+- The last two tool parameters without descriptions (`format` and `min_score`) now have them. A test keeps every parameter described.
+
 ## 0.3.1
 
 **Setup**

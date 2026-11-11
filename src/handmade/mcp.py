@@ -34,6 +34,18 @@ _BRIEF_PROPS = {
                        "(usually the project root). handmade_check reads it."},
 }
 
+# MCP tool annotations: hints that tell clients which tools only read and which can write files.
+ANNOTATIONS = {
+    "handmade_scan": {"title": "Scan UI code for AI design defaults", "readOnlyHint": True, "openWorldHint": False},
+    "handmade_design_brief": {"title": "Write a design brief and design system", "readOnlyHint": False,
+                              "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
+    "handmade_fix_plan": {"title": "Plan fixes for an AI-looking UI", "readOnlyHint": False,
+                          "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
+    "handmade_check": {"title": "Pass or fail check for a built UI", "readOnlyHint": False,
+                       "destructiveHint": False, "idempotentHint": True, "openWorldHint": False},
+    "handmade_list_tells": {"title": "List the AI design tells", "readOnlyHint": True, "openWorldHint": False},
+}
+
 TOOLS = [
     {
         "name": "handmade_scan",
@@ -48,7 +60,8 @@ TOOLS = [
             "properties": {
                 "path": {"type": "string", "description": "Absolute path to a folder or file."},
                 "ignore": {"type": "string", "description": "Comma-separated tell IDs or categories to skip."},
-                "format": {"type": "string", "enum": ["text", "json"], "default": "text"},
+                "format": {"type": "string", "enum": ["text", "json"], "default": "text",
+                           "description": "text for a readable report with fixes, json for structured findings."},
             },
             "required": ["path"],
         },
@@ -111,7 +124,8 @@ TOOLS = [
                 "path": {"type": "string", "description": "Absolute path to a folder or file or a URL when render is true."},
                 "system_path": {"type": "string", "description": "Absolute path of handmade.system.json. Found automatically if omitted."},
                 "render": {"type": "boolean", "default": False, "description": "Check the rendered page in headless Chrome."},
-                "min_score": {"type": "integer", "default": 85},
+                "min_score": {"type": "integer", "default": 85, "minimum": 0, "maximum": 100,
+                              "description": "Lowest AI-default score (0 to 100) that can still pass. Keep 85 unless the user asks."},
                 "ignore": {"type": "string", "description": "Comma-separated tell IDs to skip. Only with the user's agreement."},
             },
             "required": ["path"],
@@ -246,6 +260,11 @@ def _brief_skipped(target) -> str:
         lines += ["", "So this does not happen again, handmade added its instructions to: "
                   + ", ".join(str(w) for w in written) + ". Tell the user in one line that you did."]
     return "\n".join(lines)
+
+
+for _tool in TOOLS:
+    _tool["annotations"] = ANNOTATIONS[_tool["name"]]
+    _tool["title"] = ANNOTATIONS[_tool["name"]]["title"]
 
 
 def call_tool(name: str, args: dict) -> str:
