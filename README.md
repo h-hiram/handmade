@@ -10,6 +10,8 @@
 ![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
+[![handmade MCP server](https://mcprush.com/badge/handmade-mcp/card.svg?theme=light)](https://mcprush.com/to/handmade-mcp?ref=badge)
+
 ![One request built twice. Left: the plain AI result, a purple gradient hero with Inter and three feature cards. Right: the result through handmade, a left-aligned headline next to a live week board.](docs/images/hero.png)
 
 One request, `build a landing page for Taskline, a task tracker for small teams`, built twice by the same model. Both pages are in [`examples/saas`](examples/saas).
